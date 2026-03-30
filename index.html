@@ -45,6 +45,16 @@ body{background:var(--bg);color:var(--tx);font-family:var(--jp);padding:0 0 120p
 .pw{width:110px;height:6px;background:var(--bg2);border-radius:99px;overflow:hidden}
 .pf{height:100%;background:var(--gn);border-radius:99px;transition:width .4s}
 .pp{font-size:11px;color:var(--gn);font-weight:700;min-width:34px;text-align:right}
+/* Mode toggle */
+.mode-bar{background:var(--sf2);border-bottom:1px solid var(--bd);padding:8px 18px;display:flex;align-items:center;gap:10px}
+.mode-btn{flex:1;background:var(--bg2);border:1.5px solid var(--bd);border-radius:99px;color:var(--tx2);cursor:pointer;font-family:var(--jp);font-size:12px;font-weight:700;padding:7px 10px;text-align:center;-webkit-appearance:none;transition:all .15s}
+.mode-btn.active-lf{background:var(--gn);border-color:var(--gn);color:#fff}
+.mode-btn.active-kt{background:var(--og);border-color:var(--og);color:#fff}
+.diet-judge{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 13px;font-size:12px;color:var(--tx2);line-height:1.7;margin-top:10px;display:none}
+.diet-judge.show{display:block}
+.ng-alert{background:#fdf0e8;border:1px solid #e8a870;border-radius:var(--rs);padding:10px 13px;font-size:12px;color:#7a4010;line-height:1.75;margin-top:8px;display:none}
+.ng-alert.show{display:block}
+
 
 .wrap{padding:14px 14px 0}
 
@@ -178,7 +188,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;heigh
   <div class="pp" id="pPct">—</div>
 </div>
 
+<div class="mode-bar">
+  <button class="mode-btn active-lf" id="btnLF" onclick="setMode('lf')">🥗 ローファット</button>
+  <button class="mode-btn" id="btnKT" onclick="setMode('kt')">🥩 ケトン</button>
+  <div id="modeLbl" style="font-size:11px;color:var(--tx3);min-width:80px;text-align:right">P↑ F↓ C中</div>
+</div>
+
 <div class="wrap">
+
+  <!-- Health XML Import -->
+  <div class="card">
+    <div class="ch" onclick="tc(this)">
+      <div class="ci">📥</div><div class="ct">ヘルスケアデータ読み込み</div><div class="cg">XML → 自動反映</div><span class="cv">▼</span>
+    </div>
+    <div class="cb">
+      <div class="hint" style="margin:0 0 13px">
+        <b>使い方</b><br>
+        ① ヘルスケアアプリ → プロフィールアイコン →「すべてのヘルスデータを書き出す」<br>
+        ② ZIPを解凍 → <b>export.xml</b> を選択<br>
+        ③ 自動で今日のデータをフォームに反映します
+      </div>
+      <div class="upz" id="xmlUpz" style="cursor:pointer">
+        <input type="file" id="xmlFile" accept=".xml" onchange="importXML(this)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0">
+        <div class="upl"><div class="up-icon">📄</div><div class="up-text">export.xml を選択</div><div class="up-sub">ヘルスケアの書き出しファイル</div></div>
+      </div>
+      <div id="xmlResult" style="display:none;margin-top:10px;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px;font-size:13px;color:var(--tx2);line-height:1.8"></div>
+    </div>
+  </div>
 
   <!-- Vitals -->
   <div class="card">
@@ -242,7 +278,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;heigh
       <div class="field"><label>昼ごはん</label><textarea id="m_pm" placeholder="例：海鮮丼、鶏むねサラダ、オイコス"></textarea></div>
       <div class="field"><label>夜ごはん（時間も）</label><textarea id="m_ni" placeholder="例：（21時頃）ハヤシライス、プロテイン2杯"></textarea></div>
       <div class="field"><label>間食・サプリ</label><input type="text" id="m_sn" placeholder="例：マルチビタミン、プロテインバー"></div>
-      <div class="hint"><b>💡 PFC推定はClaude（このアプリ）に聞く！</b><br>食事内容を貼り付けて「PFCを推定して」と送るだけ</div>
+      <button onclick="copyPFCPrompt()" id="pfcCopyBtn" style="background:var(--ac);border:none;border-radius:var(--rs);color:#fff;cursor:pointer;font-family:var(--jp);font-size:14px;font-weight:700;padding:13px;width:100%;margin-top:4px;-webkit-appearance:none">📋 Claudeへのプロンプトをコピーする</button>
+      <div id="pfcCopyMsg" style="display:none;text-align:center;font-size:12px;color:var(--gn);margin-top:6px;font-weight:700">✓ コピーしました！Claudeに貼り付けてください</div>
       <div class="div"></div>
       <div class="pfc-ttl">PFC入力（Claude推定値 or 手入力）</div>
       <div class="fr c3">
@@ -256,12 +293,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;heigh
       </div>
       <div class="pfc-sec" id="pfcSec">
         <div class="div" style="margin-bottom:12px"></div>
-        <div class="pfc-ttl">目標値との比較（ローファット基準）</div>
+        <div class="pfc-ttl" id="pfcModeLabel">目標値との比較（ローファット基準）</div>
         <div class="pfc-row"><span class="pfc-nm">P たんぱく質</span><div class="pfc-bg"><div class="pfc-fill bp" id="barP" style="width:0%"></div></div><span class="jdg" id="judP">—</span></div>
         <div class="pfc-row"><span class="pfc-nm">F 脂質</span><div class="pfc-bg"><div class="pfc-fill bf" id="barF" style="width:0%"></div></div><span class="jdg" id="judF">—</span></div>
         <div class="pfc-row"><span class="pfc-nm">C 炭水化物</span><div class="pfc-bg"><div class="pfc-fill bc" id="barC" style="width:0%"></div></div><span class="jdg" id="judC">—</span></div>
         <div class="pfc-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--bd)"><span class="pfc-nm" style="font-weight:700;color:var(--tx)">カロリー収支</span><div class="pfc-bg"></div><span class="jdg" id="judK" style="font-size:12px">—</span></div>
       </div>
+      <div class="diet-judge" id="dietJudge"></div>
+      <div class="ng-alert" id="ngAlert"></div>
       <div class="div"></div>
       <label style="margin-bottom:8px;display:block">食事写真（任意）</label>
       <div class="upz" id="upz">
@@ -388,6 +427,142 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;heigh
 </div>
 
 <script>
+// ── Health XML Import ──
+// ── PFC Prompt Copy ──
+function copyPFCPrompt() {
+  const am = document.getElementById('m_am').value.trim();
+  const pm = document.getElementById('m_pm').value.trim();
+  const ni = document.getElementById('m_ni').value.trim();
+  const sn = document.getElementById('m_sn').value.trim();
+  if (!am && !pm && !ni && !sn) {
+    alert('先に食事内容を入力してください');
+    return;
+  }
+  const lines = [];
+  if (am) lines.push('朝：' + am);
+  if (pm) lines.push('昼：' + pm);
+  if (ni) lines.push('夜：' + ni);
+  if (sn) lines.push('間食・サプリ：' + sn);
+  const prompt = '以下の食事内容のPFCを推定してください。ローファットダイエット（高たんぱく・低脂質・中炭水化物）の観点で評価もお願いします。
+
+' + lines.join('
+') + '
+
+以下の形式で回答してください（マークダウン不要）：
+総カロリー：約 ○○ kcal
+たんぱく質（P）：約 ○○ g
+脂質（F）：約 ○○ g
+炭水化物（C）：約 ○○ g
+ローファット評価：P・F・Cそれぞれクリア/オーバー/不足を記載
+一言コメント：（トレーナーへの報告用に1〜2文）';
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.getElementById('pfcCopyBtn');
+    const msg = document.getElementById('pfcCopyMsg');
+    btn.textContent = '✓ コピー完了！';
+    btn.style.background = 'var(--gn)';
+    msg.style.display = 'block';
+    setTimeout(() => {
+      btn.textContent = '📋 Claudeへのプロンプトをコピーする';
+      btn.style.background = 'var(--ac)';
+      msg.style.display = 'none';
+    }, 3000);
+  });
+}
+
+function importXML(input) {
+  if (!input.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(e.target.result, 'text/xml');
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+      function getVal(type, date) {
+        const records = xml.querySelectorAll(`Record[type="${type}"]`);
+        let vals = [];
+        records.forEach(r => {
+          const d = (r.getAttribute('startDate') || '').slice(0, 10);
+          if (d === date) vals.push(parseFloat(r.getAttribute('value')));
+        });
+        return vals.length ? vals : null;
+      }
+
+      function sum(arr) { return arr ? arr.reduce((a,b)=>a+b,0) : null; }
+      function avg(arr) { return arr ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+      function last(arr) { return arr ? arr[arr.length-1] : null; }
+
+      const targetDate = todayStr;
+
+      // Steps
+      const steps = sum(getVal('HKQuantityTypeIdentifierStepCount', targetDate));
+      // Active energy
+      const calBurn = sum(getVal('HKQuantityTypeIdentifierActiveEnergyBurned', targetDate));
+      // Heart rate
+      const hrVals = getVal('HKQuantityTypeIdentifierHeartRate', targetDate);
+      const hr = hrVals ? Math.round(avg(hrVals)) : null;
+      // HRV
+      const hrvVals = getVal('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', targetDate);
+      const hrv = hrvVals ? Math.round(avg(hrvVals)) : null;
+      // Weight - check today then yesterday
+      let weightVals = getVal('HKQuantityTypeIdentifierBodyMass', targetDate);
+      if (!weightVals) weightVals = getVal('HKQuantityTypeIdentifierBodyMass', yesterdayStr);
+      const weight = weightVals ? Math.round(last(weightVals) * 10) / 10 : null;
+      // Body fat
+      let bfVals = getVal('HKQuantityTypeIdentifierBodyFatPercentage', targetDate);
+      if (!bfVals) bfVals = getVal('HKQuantityTypeIdentifierBodyFatPercentage', yesterdayStr);
+      const bf = bfVals ? Math.round(last(bfVals) * 1000) / 10 : null;
+      // SpO2
+      const spo2Vals = getVal('HKQuantityTypeIdentifierOxygenSaturation', targetDate);
+      const spo2 = spo2Vals ? Math.round(avg(spo2Vals) * 1000) / 10 : null;
+      // Sleep
+      const sleepRecs = xml.querySelectorAll('Record[type="HKCategoryTypeIdentifierSleepAnalysis"]');
+      let sleepMin = 0;
+      sleepRecs.forEach(r => {
+        const d = (r.getAttribute('startDate') || '').slice(0, 10);
+        const val = r.getAttribute('value') || '';
+        if ((d === targetDate || d === yesterdayStr) && val.includes('Asleep')) {
+          const start = new Date(r.getAttribute('startDate'));
+          const end = new Date(r.getAttribute('endDate'));
+          sleepMin += (end - start) / 60000;
+        }
+      });
+
+      // Apply to form
+      const applied = [];
+      if (steps)  { document.getElementById('steps').value = Math.round(steps); applied.push(`歩数：${Math.round(steps).toLocaleString()}歩`); }
+      if (calBurn){ document.getElementById('cal_burn').value = Math.round(calBurn); applied.push(`消費：${Math.round(calBurn)}kcal`); updPFC(); }
+      if (hr)     { document.getElementById('hr').value = hr; applied.push(`心拍：${hr}bpm`); }
+      if (hrv)    { document.getElementById('hrv').value = hrv; applied.push(`HRV：${hrv}ms`); }
+      if (weight) { document.getElementById('weight').value = weight; applied.push(`体重：${weight}kg`); updGoal(); }
+      if (bf)     { document.getElementById('bodyfat').value = bf; applied.push(`体脂肪：${bf}%`); }
+      if (spo2)   { document.getElementById('spo2').value = spo2; applied.push(`SpO₂：${spo2}%`); }
+      if (sleepMin > 30) {
+        const h = Math.floor(sleepMin / 60);
+        const m = Math.round(sleepMin % 60);
+        applied.push(`睡眠：${h}時間${m}分`);
+      }
+
+      const res = document.getElementById('xmlResult');
+      res.style.display = 'block';
+      if (applied.length) {
+        res.innerHTML = '✅ <b>反映完了！</b><br>' + applied.join('　');
+        document.getElementById('xmlUpz').style.borderColor = 'var(--gn)';
+      } else {
+        res.innerHTML = '⚠️ 今日のデータが見つかりませんでした。昨日のデータも確認しましたが取得できませんでした。';
+      }
+    } catch(err) {
+      document.getElementById('xmlResult').style.display = 'block';
+      document.getElementById('xmlResult').textContent = '⚠️ 読み込みエラー：' + err.message;
+    }
+  };
+  reader.readAsText(input.files[0], 'UTF-8');
+}
+
 const now = new Date();
 const WD=['日','月','火','水','木','金','土'];
 const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -406,7 +581,67 @@ function updGoal(){
 }
 updGoal();
 
-const T={P_MIN:130,F_MAX:50,C_MIN:150,C_MAX:250};
+// ── Diet mode ──
+const TARGETS = {
+  lf: { P_MIN:130, F_MAX:50,  C_MIN:150, C_MAX:250, label:'ローファット基準', hint:'P↑ F↓ C中' },
+  kt: { P_MIN:100, F_MIN:100, F_MAX:999, C_MAX:50,  label:'ケトン基準',       hint:'P中 F↑ C極少' }
+};
+let dietMode = 'lf';
+const T = () => TARGETS[dietMode];
+
+// NG foods for keto
+const KT_NG = ['白米','ご飯','パン','麺','うどん','ラーメン','パスタ','砂糖','ジュース','ポテト','芋','焼き芋','フルーツ','バナナ','みかん','ぶどう','お菓子','ケーキ','アイス','ビール','日本酒','コーラ'];
+const LF_NG = ['揚げ物','天ぷら','から揚げ','フライ','バター','生クリーム','マヨネーズ','ラード','ベーコン','ウインナー','ハンバーグ','ポテトチップス'];
+
+function setMode(mode) {
+  dietMode = mode;
+  document.getElementById('btnLF').className = 'mode-btn' + (mode==='lf'?' active-lf':'');
+  document.getElementById('btnKT').className = 'mode-btn' + (mode==='kt'?' active-kt':'');
+  document.getElementById('modeLbl').textContent = TARGETS[mode].hint;
+  document.getElementById('pfcModeLabel').textContent = '目標値との比較（' + TARGETS[mode].label + '）';
+  updPFC();
+  checkDiet();
+}
+
+function checkDiet() {
+  const am = (document.getElementById('m_am').value||'') + ' ';
+  const pm = (document.getElementById('m_pm').value||'') + ' ';
+  const ni = (document.getElementById('m_ni').value||'') + ' ';
+  const sn = (document.getElementById('m_sn').value||'') + ' ';
+  const all = am + pm + ni + sn;
+  if (!all.trim()) return;
+
+  // NG check
+  const ngList = dietMode === 'kt' ? KT_NG : LF_NG;
+  const found = ngList.filter(ng => all.includes(ng));
+  const ngEl = document.getElementById('ngAlert');
+  if (found.length) {
+    ngEl.innerHTML = '⚠️ <b>' + TARGETS[dietMode].label + 'のNG食材が含まれています</b><br>' + found.join('、');
+    ngEl.classList.add('show');
+  } else {
+    ngEl.classList.remove('show');
+  }
+
+  // Auto judge which diet the meal is closer to
+  const ketoPts = ['肉','魚','卵','チーズ','アボカド','ナッツ','サーモン','まぐろ','鶏','豚','牛','ベーコン','バター','オリーブ'].filter(k=>all.includes(k)).length;
+  const lfPts   = ['鶏むね','白身魚','プロテイン','豆腐','納豆','玄米','オートミール','サラダ','ブロッコリー','野菜'].filter(k=>all.includes(k)).length;
+  const judgeEl = document.getElementById('dietJudge');
+  if (ketoPts > 0 || lfPts > 0) {
+    let msg = '';
+    if (ketoPts > lfPts) msg = '🥩 この食事はケトン向きの内容が多めです（脂質・たんぱく質中心）';
+    else if (lfPts > ketoPts) msg = '🥗 この食事はローファット向きの内容が多めです（高たんぱく・低脂質）';
+    else msg = '⚖️ ローファット・ケトンどちらにも対応できる内容です';
+    judgeEl.textContent = msg;
+    judgeEl.classList.add('show');
+  }
+}
+
+// Watch meal inputs for real-time NG check
+['m_am','m_pm','m_ni','m_sn'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', checkDiet);
+});
+
 function updPFC(){
   const P=parseFloat(document.getElementById('p_p').value)||0;
   const F=parseFloat(document.getElementById('p_f').value)||0;
@@ -415,14 +650,24 @@ function updPFC(){
   const B=parseFloat(document.getElementById('cal_burn').value)||0;
   if(!P&&!F&&!C){document.getElementById('pfcSec').classList.remove('show');return;}
   document.getElementById('pfcSec').classList.add('show');
-  document.getElementById('barP').style.width=Math.min(100,P/T.P_MIN*100)+'%';
-  setJ('judP',P>=T.P_MIN?'クリア ✓':`${(T.P_MIN-P).toFixed(0)}g 不足`,P>=T.P_MIN?'ok':'ng');
-  document.getElementById('barF').style.width=Math.min(100,F/T.F_MAX*100)+'%';
-  setJ('judF',F<=T.F_MAX?'クリア ✓':`${(F-T.F_MAX).toFixed(0)}g オーバー`,F<=T.F_MAX?'ok':'ng');
-  document.getElementById('barC').style.width=Math.min(100,C/T.C_MAX*100)+'%';
-  if(C>=T.C_MIN&&C<=T.C_MAX)setJ('judC','クリア ✓','ok');
-  else if(C<T.C_MIN)setJ('judC',`${(T.C_MIN-C).toFixed(0)}g 不足`,'warn');
-  else setJ('judC',`${(C-T.C_MAX).toFixed(0)}g オーバー`,'ng');
+  document.getElementById('barP').style.width=Math.min(100,P/T().P_MIN*100)+'%';
+  setJ('judP',P>=T().P_MIN?'クリア ✓':`${(T().P_MIN-P).toFixed(0)}g 不足`,P>=T().P_MIN?'ok':'ng');
+  if(dietMode==='kt'){
+    const fMin=TARGETS.kt.F_MIN;
+    document.getElementById('barF').style.width=Math.min(100,F/200*100)+'%';
+    setJ('judF',F>=fMin?'クリア ✓':`${(fMin-F).toFixed(0)}g 不足`,F>=fMin?'ok':'ng');
+  } else {
+    document.getElementById('barF').style.width=Math.min(100,F/T().F_MAX*100)+'%';
+    setJ('judF',F<=T().F_MAX?'クリア ✓':`${(F-T().F_MAX).toFixed(0)}g オーバー`,F<=T().F_MAX?'ok':'ng');
+  }
+  document.getElementById('barC').style.width=Math.min(100,C/T().C_MAX*100)+'%';
+  if(dietMode==='kt'){
+    setJ('judC',C<=T().C_MAX?'クリア ✓':`${(C-T().C_MAX).toFixed(0)}g オーバー`,C<=T().C_MAX?'ok':'ng');
+  } else {
+    if(C>=T().C_MIN&&C<=T().C_MAX)setJ('judC','クリア ✓','ok');
+    else if(C<T().C_MIN)setJ('judC',`${(T().C_MIN-C).toFixed(0)}g 不足`,'warn');
+    else setJ('judC',`${(C-T().C_MAX).toFixed(0)}g オーバー`,'ng');
+  }
   if(K&&B){const n=Math.round(K-B);setJ('judK',`${n<=0?'':'+'}${n} kcal`,n<=0?'ok':'warn');}
 }
 function setJ(id,txt,cls){const el=document.getElementById(id);el.textContent=txt;el.className='jdg '+cls;}
@@ -485,13 +730,9 @@ function pfcLines(){
   const C=parseFloat(v('p_c'))||0,K=parseFloat(v('p_kcal'))||0;
   const B=parseFloat(v('cal_burn'))||0;
   const lines=[];
-  if(P)lines.push(`P ${P}g … ${P>=T.P_MIN?'クリア ✓':(T.P_MIN-P).toFixed(0)+'g 不足'}`);
-  if(F)lines.push(`F ${F}g … ${F<=T.F_MAX?'クリア ✓':(F-T.F_MAX).toFixed(0)+'g オーバー'}`);
-  if(C){
-    if(C>=T.C_MIN&&C<=T.C_MAX)lines.push(`C ${C}g … クリア ✓`);
-    else if(C<T.C_MIN)lines.push(`C ${C}g … ${(T.C_MIN-C).toFixed(0)}g 不足`);
-    else lines.push(`C ${C}g … ${(C-T.C_MAX).toFixed(0)}g オーバー`);
-  }
+  if(P)lines.push(`P ${P}g … ${P>=T().P_MIN?'クリア ✓':(T().P_MIN-P).toFixed(0)+'g 不足'}`);
+  if(F){if(dietMode==='kt')lines.push(`F ${F}g … ${F>=TARGETS.kt.F_MIN?'クリア ✓':(TARGETS.kt.F_MIN-F).toFixed(0)+'g 不足'}`);else lines.push(`F ${F}g … ${F<=T().F_MAX?'クリア ✓':(F-T().F_MAX).toFixed(0)+'g オーバー'}`);}
+  if(C){if(dietMode==='kt'){lines.push(`C ${C}g … ${C<=T().C_MAX?'クリア ✓':(C-T().C_MAX).toFixed(0)+'g オーバー'}`);}else{if(C>=T().C_MIN&&C<=T().C_MAX)lines.push(`C ${C}g … クリア ✓`);else if(C<T().C_MIN)lines.push(`C ${C}g … ${(T().C_MIN-C).toFixed(0)}g 不足`);else lines.push(`C ${C}g … ${(C-T().C_MAX).toFixed(0)}g オーバー`);}}
   if(K&&B){const n=Math.round(K-B);lines.push(`収支：${n<=0?'':'+'}${n} kcal`);}
   return lines;
 }
@@ -554,7 +795,7 @@ function gen(){
   if(ni)r+=`・夜：${ni}\n`;
   if(sn)r+=`・間食・サプリ：${sn}\n`;
 
-  r+=`\n★ ${wdStr} 推定PFC\n`;
+  r+=`\n★ ${wdStr} 推定PFC（${dietMode==='kt'?'ケトンモード':'ローファットモード'}）\n`;
   r+=`・総カロリー：約 ${K||'—'} kcal\n`;
   r+=`・たんぱく質（P）：約 ${P||'—'} g\n`;
   r+=`・脂質（F）：約 ${F||'—'} g\n`;

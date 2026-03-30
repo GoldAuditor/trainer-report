@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Trainer Log">
+<meta name="theme-color" content="f4efe6">
+<title>Trainer Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4efe6;--bg2:#ece6d8;--sf:#faf7f1;--sf2:#f0e9d8;
+  --bd:#d5c9b4;--bd2:#bfb09a;
+  --tx:#332b22;--tx2:#6a5c4c;--tx3:#9a8a76;
+  --ac:#7b6249;--gn:#4d7a5c;--og:#a07040;--rd:#8b4848;
+  --sh:rgba(80,60,40,.09);
+  --r:14px;--rs:9px;
+  --jp:'Zen Kaku Gothic New',sans-serif;
+  --se:'Playfair Display',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--jp);padding:0 0 120px;font-size:15px}
+
+/* Header */
+.hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:52px 18px 16px;display:flex;align-items:flex-end;justify-content:space-between;position:sticky;top:0;z-index:50}
+.hdr-l h1{font-family:var(--se);font-size:20px;color:var(--ac)}
+.hdr-l p{font-size:11px;color:var(--tx3);margin-top:3px;letter-spacing:.5px}
+.hdr-r{text-align:right}
+.hdr-r .mn{font-size:10px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase}
+.hdr-r .dy{font-size:28px;font-family:var(--se);color:var(--ac);line-height:1}
+.hdr-r .wd{font-size:11px;color:var(--tx3)}
+
+/* Goal bar */
+.gbar{background:var(--sf2);border-bottom:1px solid var(--bd);padding:10px 18px;display:flex;align-items:center;gap:10px}
+.gbar .gl{font-size:12px;color:var(--tx2);flex:1}
+.gbar .gl b{color:var(--ac)}
+.pw{width:110px;height:6px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.pf{height:100%;background:var(--gn);border-radius:99px;transition:width .4s}
+.pp{font-size:11px;color:var(--gn);font-weight:700;min-width:34px;text-align:right}
+
+/* Content */
+.wrap{padding:14px 14px 0}
+
+/* Card */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 6px var(--sh)}
+.ch{display:flex;align-items:center;gap:9px;padding:13px 15px;background:var(--sf2);border-bottom:1px solid transparent;cursor:pointer;user-select:none;-webkit-user-select:none}
+.ch.open{border-bottom-color:var(--bd)}
+.ci{font-size:16px;width:32px;height:32px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ct{font-size:14px;font-weight:700;color:var(--tx);flex:1}
+.cg{font-size:10px;color:var(--tx3);letter-spacing:.4px}
+.cv{font-size:11px;color:var(--tx3);transition:transform .22s;margin-left:3px}
+.ch.open .cv{transform:rotate(180deg)}
+.cb{padding:15px;display:none}
+.cb.open{display:block}
+
+/* Fields */
+.field{margin-bottom:13px}
+.field:last-child{margin-bottom:0}
+.fr{display:grid;gap:9px;margin-bottom:13px}
+.fr:last-child{margin-bottom:0}
+.fr.c2{grid-template-columns:1fr 1fr}
+.fr.c3{grid-template-columns:1fr 1fr 1fr}
+label{display:block;font-size:11px;color:var(--tx3);letter-spacing:.4px;margin-bottom:5px;font-weight:500}
+
+input[type=text],input[type=number],input[type=time],textarea{
+  background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);
+  color:var(--tx);font-family:var(--jp);font-size:16px;padding:11px 12px;
+  width:100%;-webkit-appearance:none;outline:none;
+  transition:border-color .2s,background .2s;
+}
+input:focus,textarea:focus{border-color:var(--ac);background:var(--sf)}
+textarea{resize:none;min-height:80px;line-height:1.75}
+.c3 input{padding:11px 5px;text-align:center}
+
+/* Range */
+.rr{display:flex;align-items:center;gap:10px;margin-top:5px}
+input[type=range]{-webkit-appearance:none;background:var(--bg2);border:1px solid var(--bd);border-radius:99px;height:8px;flex:1;padding:0;cursor:pointer;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--ac);border:3px solid var(--sf);box-shadow:0 1px 4px var(--sh);cursor:pointer}
+.rv{font-size:20px;font-family:var(--se);color:var(--ac);min-width:26px;text-align:center}
+.rl{display:flex;justify-content:space-between;margin-top:3px}
+.rl span{font-size:10px;color:var(--tx3)}
+
+/* Condition */
+.cg2{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cnb{background:var(--bg2);border:1.5px solid var(--bd);border-radius:11px;cursor:pointer;padding:10px 2px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;-webkit-appearance:none;transition:all .15s;min-height:60px}
+.cnb .em{font-size:22px}
+.cnb .lb{font-size:9px;color:var(--tx3);font-weight:500}
+.cnb.sel{background:var(--sf2);border-color:var(--ac)}
+.cnb.sel .lb{color:var(--ac)}
+
+/* PFC bars */
+.pfc-sec{margin-top:10px;display:none}
+.pfc-sec.show{display:block}
+.pfc-ttl{font-size:11px;color:var(--tx3);letter-spacing:.4px;margin-bottom:8px;font-weight:500}
+.pfc-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pfc-nm{font-size:12px;color:var(--tx2);width:100px;flex-shrink:0}
+.pfc-bg{flex:1;height:8px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.pfc-fill{height:100%;border-radius:99px;transition:width .4s}
+.bp{background:var(--gn)}.bf{background:var(--rd)}.bc{background:var(--og)}
+.jdg{font-size:11px;font-weight:700;min-width:84px;text-align:right;white-space:nowrap}
+.ok{color:var(--gn)}.ng{color:var(--rd)}.warn{color:var(--og)}
+
+/* Divider */
+.div{height:1px;background:var(--bd);margin:13px 0}
+
+/* Workout */
+.wlbl{display:grid;grid-template-columns:1fr 50px 90px 36px;gap:6px;margin-bottom:6px}
+.wlbl span{font-size:10px;color:var(--tx3)}
+.wr{display:grid;grid-template-columns:1fr 50px 90px 36px;gap:6px;margin-bottom:6px;align-items:center}
+.wr input{padding:10px 7px;font-size:16px}
+.rmbtn{background:var(--bg2);border:1px solid var(--bd);border-radius:7px;color:var(--tx3);font-size:20px;height:44px;width:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;padding:0;flex-shrink:0}
+.rmbtn:active{background:#e8d8d8;border-color:var(--rd);color:var(--rd)}
+.addbtn{background:none;border:1px dashed var(--bd2);border-radius:var(--rs);color:var(--tx3);font-family:var(--jp);font-size:15px;padding:12px;width:100%;cursor:pointer;-webkit-appearance:none;margin-top:2px}
+.addbtn:active{background:var(--bg2);color:var(--ac);border-color:var(--ac)}
+
+/* Photo */
+.upz{border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:22px 16px;text-align:center;position:relative;background:var(--bg2)}
+.upz.hp{border-style:solid;border-color:var(--gn);padding:0;overflow:hidden}
+.upz input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}
+.upz img{width:100%;max-height:200px;object-fit:cover;display:none;border-radius:var(--rs)}
+.upz.hp img{display:block}
+.upz.hp .upl{display:none}
+.up-icon{font-size:28px;margin-bottom:8px}
+.up-text{font-size:14px;color:var(--tx2);font-weight:500}
+.up-sub{font-size:11px;color:var(--tx3);margin-top:3px}
+
+/* Hint */
+.hint{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:var(--tx2);line-height:1.75;margin-top:10px}
+.hint b{color:var(--og)}
+
+/* Generate */
+.gen-wrap{padding:0 14px;margin-top:10px}
+.gen-btn{background:var(--ac);border:none;border-radius:var(--r);color:#fff;cursor:pointer;font-family:var(--jp);font-size:16px;font-weight:700;padding:18px;width:100%;box-shadow:0 4px 14px rgba(120,95,70,.28);-webkit-appearance:none;letter-spacing:.3px}
+.gen-btn:active{opacity:.85}
+
+/* Report */
+.rep-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin:10px 14px 0;overflow:hidden;box-shadow:0 2px 6px var(--sh);display:none}
+.rep-card.show{display:block}
+.rep-top{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;background:var(--sf2);border-bottom:1px solid var(--bd)}
+.rep-top span{font-size:13px;font-weight:700;color:var(--tx2)}
+.cpbtn{background:var(--ac);border:none;border-radius:8px;color:#fff;cursor:pointer;font-family:var(--jp);font-size:14px;font-weight:500;padding:9px 20px;-webkit-appearance:none}
+.cpbtn:active{opacity:.8}
+.cpbtn.done{background:var(--gn)}
+.rep-body{padding:16px;font-size:14px;line-height:2;white-space:pre-wrap;word-break:break-word;color:var(--tx)}
+
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  body{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+  .hdr{padding-top:max(52px, calc(44px + env(safe-area-inset-top)))}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <h1>Trainer Report</h1>
+    <p>ローファットダイエット記録</p>
+  </div>
+  <div class="hdr-r">
+    <div class="mn" id="hMon"></div>
+    <div class="dy" id="hDay"></div>
+    <div class="wd" id="hWd"></div>
+  </div>
+</div>
+
+<div class="gbar">
+  <div class="gl">目標 <b id="gDisp">70.0kg</b> まで <b id="rDisp">—</b></div>
+  <div class="pw"><div class="pf" id="pFill" style="width:0%"></div></div>
+  <div class="pp" id="pPct">—</div>
+</div>
+
+<div class="wrap">
+
+  <!-- Vitals -->
+  <div class="card">
+    <div class="ch open" onclick="tc(this)">
+      <div class="ci">📊</div><div class="ct">バイタル</div><div class="cg">Apple Watch</div><span class="cv">▼</span>
+    </div>
+    <div class="cb open">
+      <div class="hint" style="margin:0 0 13px">
+        <b>ヘルスケアの確認場所</b><br>
+        体重 → 朝に体重計で計測して入力<br>
+        歩数・消費 → アクティビティタブ<br>
+        心拍・HRV → 心臓 → 心拍数の変動<br>
+        睡眠 → 睡眠 → 睡眠分析
+      </div>
+      <div class="fr c3">
+        <div class="field"><label>朝の体重 kg</label><input type="number" id="weight" inputmode="decimal" step="0.1" placeholder="71.9" oninput="updGoal()"></div>
+        <div class="field"><label>体脂肪率 %</label><input type="number" id="bodyfat" inputmode="decimal" step="0.1" placeholder="18.5"></div>
+        <div class="field"><label>BMI</label><input type="number" id="bmi" inputmode="decimal" step="0.1" placeholder="22.1"></div>
+      </div>
+      <div class="fr c3">
+        <div class="field"><label>心拍 bpm</label><input type="number" id="hr" inputmode="numeric" placeholder="58"></div>
+        <div class="field"><label>HRV ms</label><input type="number" id="hrv" inputmode="numeric" placeholder="45"></div>
+        <div class="field"><label>SpO₂ %</label><input type="number" id="spo2" inputmode="decimal" step="0.1" placeholder="98"></div>
+      </div>
+      <div class="fr c3">
+        <div class="field"><label>歩数</label><input type="number" id="steps" inputmode="numeric" placeholder="8500"></div>
+        <div class="field"><label>消費 kcal</label><input type="number" id="cal_burn" inputmode="numeric" placeholder="450" oninput="updPFC()"></div>
+        <div class="field"><label>活動 min</label><input type="number" id="act_min" inputmode="numeric" placeholder="45"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sleep -->
+  <div class="card">
+    <div class="ch" onclick="tc(this)">
+      <div class="ci">🌙</div><div class="ct">睡眠</div><div class="cg">Recovery</div><span class="cv">▼</span>
+    </div>
+    <div class="cb">
+      <div class="fr c2">
+        <div class="field"><label>就寝</label><input type="time" id="s_in" value="23:30"></div>
+        <div class="field"><label>起床</label><input type="time" id="s_out" value="07:00"></div>
+      </div>
+      <div class="field">
+        <label>睡眠の質</label>
+        <div class="rr">
+          <input type="range" id="s_q" min="1" max="5" value="3" oninput="document.getElementById('sqv').textContent=this.value">
+          <span class="rv" id="sqv">3</span>
+        </div>
+        <div class="rl"><span>浅い</span><span>普通</span><span>深い</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Food -->
+  <div class="card">
+    <div class="ch open" onclick="tc(this)">
+      <div class="ci">🍱</div><div class="ct">食事・PFC記録</div><div class="cg">Nutrition</div><span class="cv">▼</span>
+    </div>
+    <div class="cb open">
+      <div class="field"><label>朝ごはん</label><textarea id="m_am" placeholder="例：焼き芋1本、ホエイプロテイン2杯"></textarea></div>
+      <div class="field"><label>昼ごはん</label><textarea id="m_pm" placeholder="例：海鮮丼、鶏むねサラダ、オイコス"></textarea></div>
+      <div class="field"><label>夜ごはん（時間も）</label><textarea id="m_ni" placeholder="例：（21時頃）ハヤシライス、プロテイン2杯"></textarea></div>
+      <div class="field"><label>間食・サプリ</label><input type="text" id="m_sn" placeholder="例：マルチビタミン、プロテインバー"></div>
+
+      <div class="hint">
+        <b>💡 PFC推定はClaude（このアプリ）に聞く！</b><br>
+        食事内容を貼り付けて「PFCを推定して」と<br>送るだけで計算してくれます
+      </div>
+
+      <div class="div"></div>
+      <div class="pfc-ttl">PFC入力（Claude推定値 or 手入力）</div>
+      <div class="fr c3">
+        <div class="field"><label>総 kcal</label><input type="number" id="p_kcal" inputmode="numeric" placeholder="1900" oninput="updPFC()"></div>
+        <div class="field"><label>P たんぱく質 g</label><input type="number" id="p_p" inputmode="numeric" placeholder="150" oninput="updPFC()"></div>
+        <div class="field"><label>F 脂質 g</label><input type="number" id="p_f" inputmode="numeric" placeholder="40" oninput="updPFC()"></div>
+      </div>
+      <div class="fr c2">
+        <div class="field"><label>C 炭水化物 g</label><input type="number" id="p_c" inputmode="numeric" placeholder="200" oninput="updPFC()"></div>
+        <div class="field"><label>水分 ml</label><input type="number" id="water" inputmode="numeric" placeholder="2000"></div>
+      </div>
+
+      <!-- PFC judge bars -->
+      <div class="pfc-sec" id="pfcSec">
+        <div class="div" style="margin-bottom:12px"></div>
+        <div class="pfc-ttl">目標値との比較（ローファット基準）</div>
+        <div class="pfc-row">
+          <span class="pfc-nm">P たんぱく質</span>
+          <div class="pfc-bg"><div class="pfc-fill bp" id="barP" style="width:0%"></div></div>
+          <span class="jdg" id="judP">—</span>
+        </div>
+        <div class="pfc-row">
+          <span class="pfc-nm">F 脂質</span>
+          <div class="pfc-bg"><div class="pfc-fill bf" id="barF" style="width:0%"></div></div>
+          <span class="jdg" id="judF">—</span>
+        </div>
+        <div class="pfc-row">
+          <span class="pfc-nm">C 炭水化物</span>
+          <div class="pfc-bg"><div class="pfc-fill bc" id="barC" style="width:0%"></div></div>
+          <span class="jdg" id="judC">—</span>
+        </div>
+        <div class="pfc-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--bd)">
+          <span class="pfc-nm" style="font-weight:700;color:var(--tx)">カロリー収支</span>
+          <div class="pfc-bg"></div>
+          <span class="jdg" id="judK" style="font-size:12px">—</span>
+        </div>
+      </div>
+
+      <div class="div"></div>
+      <label style="margin-bottom:8px;display:block">食事写真（任意）</label>
+      <div class="upz" id="upz">
+        <input type="file" id="photoInput" accept="image/*" onchange="onPhoto(this)">
+        <div class="upl"><div class="up-icon">📷</div><div class="up-text">写真を追加 / カメラで撮影</div><div class="up-sub">カメラロールから選べます</div></div>
+        <img id="prevImg" src="" alt="">
+      </div>
+    </div>
+  </div>
+
+  <!-- Condition -->
+  <div class="card">
+    <div class="ch" onclick="tc(this)">
+      <div class="ci">🌿</div><div class="ct">コンディション</div><div class="cg">Self Check</div><span class="cv">▼</span>
+    </div>
+    <div class="cb">
+      <label style="margin-bottom:10px;display:block">今日の調子</label>
+      <div class="cg2">
+        <button class="cnb" onclick="pc(this,'最高🔥')"><span class="em">🔥</span><span class="lb">最高</span></button>
+        <button class="cnb" onclick="pc(this,'良い😊')"><span class="em">😊</span><span class="lb">良い</span></button>
+        <button class="cnb" onclick="pc(this,'普通😐')"><span class="em">😐</span><span class="lb">普通</span></button>
+        <button class="cnb" onclick="pc(this,'疲労😮‍💨')"><span class="em">😮‍💨</span><span class="lb">疲労</span></button>
+        <button class="cnb" onclick="pc(this,'不調😞')"><span class="em">😞</span><span class="lb">不調</span></button>
+      </div>
+      <div class="field" style="margin-top:13px">
+        <label>違和感・疲労など</label>
+        <input type="text" id="cond_note" placeholder="例：右肩に張り感あり、脚はむしろ軽い">
+      </div>
+    </div>
+  </div>
+
+  <!-- Workout -->
+  <div class="card">
+    <div class="ch" onclick="tc(this)">
+      <div class="ci">💪</div><div class="ct">ワークアウト</div><div class="cg">Training</div><span class="cv">▼</span>
+    </div>
+    <div class="cb">
+      <div class="wlbl"><span>種目</span><span>Set</span><span>回数/重量</span><span></span></div>
+      <div id="wrows">
+        <div class="wr">
+          <input type="text" class="wn" placeholder="ベンチプレス">
+          <input type="text" class="ws" placeholder="3" inputmode="numeric" style="text-align:center">
+          <input type="text" class="wc" placeholder="10回×60kg">
+          <button class="rmbtn" onclick="remRow(this)">－</button>
+        </div>
+      </div>
+      <button class="addbtn" onclick="addRow()">＋ 種目を追加</button>
+    </div>
+  </div>
+
+  <!-- Comment -->
+  <div class="card">
+    <div class="ch" onclick="tc(this)">
+      <div class="ci">✏️</div><div class="ct">コメント</div><div class="cg">Memo</div><span class="cv">▼</span>
+    </div>
+    <div class="cb">
+      <textarea id="comment" placeholder="今日の気づき、相談事項、モチベーションなど…"></textarea>
+    </div>
+  </div>
+
+</div>
+
+<div class="gen-wrap">
+  <button class="gen-btn" onclick="gen()">📋 LINE報告書を生成する</button>
+</div>
+
+<div class="rep-card" id="repCard">
+  <div class="rep-top">
+    <span>📲 コピーしてLINEへ</span>
+    <button class="cpbtn" id="cpBtn" onclick="cp()">コピー</button>
+  </div>
+  <div class="rep-body" id="repBody"></div>
+</div>
+
+<script>
+// ── Date ──
+const now = new Date();
+const WD  = ['日','月','火','水','木','金','土'];
+const MO  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('hMon').textContent = MO[now.getMonth()] + ' ' + now.getFullYear();
+document.getElementById('hDay').textContent = String(now.getDate()).padStart(2,'0');
+document.getElementById('hWd').textContent  = WD[now.getDay()] + '曜日';
+
+// ── Goal ──
+const GOAL = 70.0, START = 71.9;
+function updGoal() {
+  const w = parseFloat(document.getElementById('weight').value) || START;
+  const rem = (w - GOAL).toFixed(1);
+  document.getElementById('rDisp').textContent = rem > 0 ? `あと ${rem}kg` : '達成！🎉';
+  const done = Math.max(0, Math.min(1, (START - w) / (START - GOAL)));
+  document.getElementById('pFill').style.width = (done * 100).toFixed(1) + '%';
+  document.getElementById('pPct').textContent = Math.round(done * 100) + '%';
+}
+updGoal();
+
+// ── PFC targets ──
+const T = { P_MIN:130, F_MAX:50, C_MIN:150, C_MAX:250 };
+
+function updPFC() {
+  const P = parseFloat(document.getElementById('p_p').value) || 0;
+  const F = parseFloat(document.getElementById('p_f').value) || 0;
+  const C = parseFloat(document.getElementById('p_c').value) || 0;
+  const K = parseFloat(document.getElementById('p_kcal').value) || 0;
+  const B = parseFloat(document.getElementById('cal_burn').value) || 0;
+  if (!P && !F && !C) { document.getElementById('pfcSec').classList.remove('show'); return; }
+  document.getElementById('pfcSec').classList.add('show');
+
+  // P
+  document.getElementById('barP').style.width = Math.min(100, P / T.P_MIN * 100) + '%';
+  if (P >= T.P_MIN) { setJ('judP','クリア ✓','ok'); }
+  else { setJ('judP', `${(T.P_MIN - P).toFixed(0)}g 不足`, 'ng'); }
+
+  // F
+  document.getElementById('barF').style.width = Math.min(100, F / T.F_MAX * 100) + '%';
+  if (F <= T.F_MAX) { setJ('judF','クリア ✓','ok'); }
+  else { setJ('judF', `${(F - T.F_MAX).toFixed(0)}g オーバー`, 'ng'); }
+
+  // C
+  document.getElementById('barC').style.width = Math.min(100, C / T.C_MAX * 100) + '%';
+  if (C >= T.C_MIN && C <= T.C_MAX) { setJ('judC','クリア ✓','ok'); }
+  else if (C < T.C_MIN) { setJ('judC', `${(T.C_MIN - C).toFixed(0)}g 不足`, 'warn'); }
+  else { setJ('judC', `${(C - T.C_MAX).toFixed(0)}g オーバー`, 'ng'); }
+
+  // Kcal balance
+  if (K && B) {
+    const net = Math.round(K - B);
+    setJ('judK', `${net <= 0 ? '' : '+'}${net} kcal`, net <= 0 ? 'ok' : 'warn');
+  }
+}
+
+function setJ(id, txt, cls) {
+  const el = document.getElementById(id);
+  el.textContent = txt;
+  el.className = 'jdg ' + cls;
+}
+
+// ── Card toggle ──
+function tc(h) {
+  h.classList.toggle('open');
+  h.nextElementSibling.classList.toggle('open');
+}
+
+// ── Condition ──
+let cond = '';
+function pc(b, v) {
+  document.querySelectorAll('.cnb').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); cond = v;
+}
+
+// ── Workout ──
+function addRow() {
+  const d = document.createElement('div');
+  d.className = 'wr';
+  const s = 'background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:var(--jp);font-size:16px;padding:10px 7px;width:100%;-webkit-appearance:none;outline:none';
+  d.innerHTML = `
+    <input type="text" class="wn" placeholder="種目名" style="${s}">
+    <input type="text" class="ws" placeholder="3" inputmode="numeric" style="${s};text-align:center">
+    <input type="text" class="wc" placeholder="10回" style="${s}">
+    <button onclick="remRow(this)" class="rmbtn">－</button>`;
+  document.getElementById('wrows').appendChild(d);
+}
+function remRow(b) {
+  if (document.querySelectorAll('.wr').length > 1) b.parentElement.remove();
+}
+
+// ── Photo ──
+function onPhoto(inp) {
+  if (!inp.files?.[0]) return;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById('prevImg').src = e.target.result;
+    document.getElementById('upz').classList.add('hp');
+  };
+  r.readAsDataURL(inp.files[0]);
+}
+
+// ── Helpers ──
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function pfcLines() {
+  const P = parseFloat(v('p_p'))||0, F = parseFloat(v('p_f'))||0;
+  const C = parseFloat(v('p_c'))||0, K = parseFloat(v('p_kcal'))||0;
+  const B = parseFloat(v('cal_burn'))||0;
+  const lines = [];
+  if (P) lines.push(`P ${P}g … ${P >= T.P_MIN ? 'クリア ✓' : (T.P_MIN-P).toFixed(0)+'g 不足'}`);
+  if (F) lines.push(`F ${F}g … ${F <= T.F_MAX ? 'クリア ✓' : (F-T.F_MAX).toFixed(0)+'g オーバー'}`);
+  if (C) {
+    if (C >= T.C_MIN && C <= T.C_MAX) lines.push(`C ${C}g … クリア ✓`);
+    else if (C < T.C_MIN) lines.push(`C ${C}g … ${(T.C_MIN-C).toFixed(0)}g 不足`);
+    else lines.push(`C ${C}g … ${(C-T.C_MAX).toFixed(0)}g オーバー`);
+  }
+  if (K && B) { const n = Math.round(K-B); lines.push(`収支：${n<=0?'':'+'}${n} kcal`); }
+  return lines;
+}
+
+// ── Generate ──
+function gen() {
+  const wdStr = `${now.getMonth()+1}/${now.getDate()}(${WD[now.getDay()]})`;
+  const wt=v('weight'),bf=v('bodyfat'),bmi=v('bmi');
+  const hr=v('hr'),hrv=v('hrv'),spo2=v('spo2');
+  const steps=v('steps'),calB=v('cal_burn'),actMin=v('act_min');
+  const sIn=v('s_in'),sOut=v('s_out'),sq=v('s_q');
+  const am=v('m_am'),pm=v('m_pm'),ni=v('m_ni'),sn=v('m_sn');
+  const K=v('p_kcal'),P=v('p_p'),F=v('p_f'),C=v('p_c'),water=v('water');
+  const cn=v('cond_note'),cmt=v('comment');
+
+  const wlines = [...document.querySelectorAll('.wr')].map(r => {
+    const n=r.querySelector('.wn').value.trim();
+    const s=r.querySelector('.ws').value.trim();
+    const c=r.querySelector('.wc').value.trim();
+    return n ? `・${n}${s?' '+s+'set':''}${c?' '+c:''}` : '';
+  }).filter(Boolean);
+
+  const judges = pfcLines();
+  let r = '';
+
+  // バイタル冒頭
+  r += `・${wdStr} 朝：${wt||'—'}kg`;
+  if (bf) r += `　体脂肪率：${bf}%`;
+  if (bmi) r += `　BMI：${bmi}`;
+  r += '\n';
+  if (hr||hrv||spo2) {
+    const a=[];
+    if(hr) a.push(`心拍 ${hr}bpm`);
+    if(hrv) a.push(`HRV ${hrv}ms`);
+    if(spo2) a.push(`SpO₂ ${spo2}%`);
+    r += `・${a.join('　')}\n`;
+  }
+  if (steps||calB||actMin) {
+    const a=[];
+    if(steps) a.push(`歩数 ${Number(steps).toLocaleString()}歩`);
+    if(calB) a.push(`消費 ${calB}kcal`);
+    if(actMin) a.push(`活動 ${actMin}分`);
+    r += `・${a.join('　')}\n`;
+  }
+
+  // 睡眠
+  r += `\n🌙 睡眠\n`;
+  if(sIn&&sOut) r += `${sIn} 就寝 → ${sOut} 起床\n`;
+  r += `質：${'★'.repeat(parseInt(sq))}${'☆'.repeat(5-parseInt(sq))} (${sq}/5)\n`;
+
+  // コンディション
+  if(cond||cn) {
+    r += `\n🌿 コンディション\n`;
+    if(cond) r += `調子：${cond}\n`;
+    if(cn)   r += `詳細：${cn}\n`;
+  }
+
+  // 食事（今のフォーマットに合わせる）
+  r += `\n■ 食事・行動・PFCの記録\n`;
+  r += `【${wdStr} の陣形】\n`;
+  if(am) r += `・朝：${am}\n`;
+  if(pm) r += `・昼：${pm}\n`;
+  if(ni) r += `・夜：${ni}\n`;
+  if(sn) r += `・間食・サプリ：${sn}\n`;
+
+  // PFC
+  r += `\n★ ${wdStr} 推定PFC\n`;
+  r += `・総カロリー：約 ${K||'—'} kcal\n`;
+  r += `・たんぱく質（P）：約 ${P||'—'} g\n`;
+  r += `・脂質（F）：約 ${F||'—'} g\n`;
+  r += `・炭水化物（C）：約 ${C||'—'} g\n`;
+  if(water) r += `・水分：${water} ml\n`;
+
+  // 目標比較
+  if(judges.length) {
+    r += `\n📊 目標値との比較\n`;
+    judges.forEach(l => { r += `・${l}\n`; });
+  }
+
+  // ワークアウト
+  if(wlines.length) {
+    r += `\n💪 ワークアウト\n`;
+    wlines.forEach(l => { r += `${l}\n`; });
+  }
+
+  // コメント
+  if(cmt) r += `\n✏️ ${cmt}\n`;
+
+  // 目標進捗
+  if(wt) {
+    const rem = (parseFloat(wt) - GOAL).toFixed(1);
+    r += `\n📍 目標：${GOAL}kg`;
+    r += rem > 0 ? `（あと ${rem}kg）` : `（目標達成🎉）`;
+    r += '\n';
+  }
+
+  document.getElementById('repBody').textContent = r.trimEnd();
+  const card = document.getElementById('repCard');
+  card.classList.add('show');
+  setTimeout(() => card.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+}
+
+// ── Copy ──
+function cp() {
+  navigator.clipboard.writeText(document.getElementById('repBody').textContent).then(() => {
+    const b = document.getElementById('cpBtn');
+    b.textContent = '✓ コピー完了';
+    b.classList.add('done');
+    setTimeout(() => { b.textContent = 'コピー'; b.classList.remove('done'); }, 2200);
+  });
+}
+</script>
+</body>
+</html>

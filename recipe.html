@@ -27,6 +27,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--jp);padding:0 0 90px
 
 .wrap{padding:14px 14px 0}
 
+/* Card */
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 6px var(--sh)}
 .ch{display:flex;align-items:center;gap:9px;padding:13px 15px;background:var(--sf2);border-bottom:1px solid var(--bd)}
 .ci{font-size:16px;width:32px;height:32px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -34,31 +35,53 @@ body{background:var(--bg);color:var(--tx);font-family:var(--jp);padding:0 0 90px
 .cb{padding:15px}
 
 label{display:block;font-size:11px;color:var(--tx3);letter-spacing:.4px;margin-bottom:5px;font-weight:500}
-input[type=text],textarea,select{
-  background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);
-  color:var(--tx);font-family:var(--jp);font-size:16px;padding:11px 12px;
-  width:100%;-webkit-appearance:none;outline:none;
-  transition:border-color .2s,background .2s;
-}
-input:focus,textarea:focus,select:focus{border-color:var(--ac);background:var(--sf)}
-textarea{resize:none;line-height:1.75}
+input[type=text]{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:var(--jp);font-size:16px;padding:11px 12px;width:100%;-webkit-appearance:none;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--ac);background:var(--sf)}
 
-.field{margin-bottom:13px}
-.field:last-child{margin-bottom:0}
+/* Receipt upload */
+.upz{border:1.5px dashed var(--bd2);border-radius:var(--rs);padding:20px 16px;text-align:center;position:relative;background:var(--bg2);transition:all .2s}
+.upz.hp{border-style:solid;border-color:var(--gn);padding:0;overflow:hidden}
+.upz input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:0}
+.upz img{width:100%;max-height:180px;object-fit:cover;display:none;border-radius:var(--rs)}
+.upz.hp img{display:block}.upz.hp .upl{display:none}
+.up-icon{font-size:26px;margin-bottom:7px}.up-text{font-size:14px;color:var(--tx2);font-weight:500}.up-sub{font-size:11px;color:var(--tx3);margin-top:3px}
 
-/* Ingredient tags */
-.tag-area{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:36px}
-.tag{background:var(--sf2);border:1.5px solid var(--bd);border-radius:99px;color:var(--tx2);font-size:13px;padding:5px 12px;display:flex;align-items:center;gap:6px}
-.tag .rm{cursor:pointer;color:var(--tx3);font-size:15px;line-height:1}
-.tag .rm:hover{color:var(--rd)}
-.tag-input-row{display:flex;gap:8px;margin-top:8px}
-.tag-input-row input{flex:1}
-.add-tag-btn{background:var(--ac);border:none;border-radius:var(--rs);color:#fff;cursor:pointer;font-family:var(--jp);font-size:14px;padding:11px 16px;white-space:nowrap;-webkit-appearance:none;flex-shrink:0}
-.add-tag-btn:active{opacity:.8}
+.scan-btn{background:var(--gn);border:none;border-radius:var(--rs);color:#fff;cursor:pointer;font-family:var(--jp);font-size:14px;font-weight:600;padding:13px;width:100%;margin-top:10px;display:none;-webkit-appearance:none}
+.scan-btn.show{display:block}
+.scan-btn:active{opacity:.8}
+.scan-btn:disabled{opacity:.5}
+
+/* Loading dots */
+.ldots{display:none;align-items:center;justify-content:center;gap:7px;padding:14px;font-size:12px;color:var(--tx3)}
+.ldots.show{display:flex}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ac);animation:dp 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+/* Manual add */
+.add-row{display:flex;gap:8px;margin-bottom:12px}
+.add-row input{flex:1}
+.add-btn{background:var(--ac);border:none;border-radius:var(--rs);color:#fff;cursor:pointer;font-family:var(--jp);font-size:14px;padding:11px 16px;white-space:nowrap;-webkit-appearance:none;flex-shrink:0}
+.add-btn:active{opacity:.8}
+
+/* Ingredient list */
+.ing-count{font-size:12px;color:var(--tx3);margin-bottom:10px}
+.ing-count b{color:var(--ac)}
+.ing-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg2)}
+.ing-item:last-child{border-bottom:none}
+.ing-chk{width:20px;height:20px;border:2px solid var(--bd);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .15s}
+.ing-chk.checked{background:var(--rd);border-color:var(--rd)}
+.ing-chk.checked::after{content:'✕';color:#fff;font-size:11px;font-weight:700}
+.ing-name{flex:1;font-size:14px;color:var(--tx)}
+.ing-del{background:none;border:1px solid var(--bd);border-radius:6px;color:var(--tx3);cursor:pointer;font-size:12px;padding:5px 10px;-webkit-appearance:none;transition:all .15s;white-space:nowrap}
+.ing-del:active{background:#e8d8d8;border-color:var(--rd);color:var(--rd)}
+.clear-btn{background:none;border:1px solid var(--rd);border-radius:var(--rs);color:var(--rd);cursor:pointer;font-family:var(--jp);font-size:13px;padding:9px;width:100%;margin-top:10px;-webkit-appearance:none}
+.clear-btn:active{background:#f5e8e8}
+.empty-msg{text-align:center;padding:24px;color:var(--tx3);font-size:13px}
 
 /* Options */
-.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.opt-btn{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rs);color:var(--tx2);cursor:pointer;font-family:var(--jp);font-size:13px;padding:10px 8px;text-align:center;-webkit-appearance:none;transition:all .15s}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.opt-btn{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rs);color:var(--tx2);cursor:pointer;font-family:var(--jp);font-size:13px;padding:10px 6px;text-align:center;-webkit-appearance:none;transition:all .15s}
 .opt-btn.sel{background:var(--sf2);border-color:var(--ac);color:var(--ac);font-weight:700}
 
 /* Generate */
@@ -66,37 +89,33 @@ textarea{resize:none;line-height:1.75}
 .gen-btn:active{opacity:.85}
 .gen-btn:disabled{opacity:.5}
 
-/* Loading */
-.loading{display:none;text-align:center;padding:30px;color:var(--tx3);font-size:13px}
-.loading.show{display:block}
-.dots-wrap{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--ac);animation:dp 1.2s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes dp{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
-
 /* Recipe results */
-.recipe-list{margin-top:10px}
 .recipe-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:0 2px 6px var(--sh)}
-.recipe-hdr{background:var(--sf2);border-bottom:1px solid var(--bd);padding:13px 15px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
-.recipe-num{background:var(--ac);color:#fff;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
-.recipe-name{font-size:15px;font-weight:700;color:var(--tx);flex:1}
-.recipe-pfc{font-size:11px;color:var(--tx3);margin-top:3px}
-.recipe-badge{font-size:10px;background:#ddeedd;color:#2d5a2d;border-radius:99px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
-.recipe-body{padding:15px;display:none;border-top:1px solid var(--bd)}
-.recipe-body.open{display:block}
-.section-label{font-size:11px;color:var(--tx3);letter-spacing:.4px;font-weight:700;margin-bottom:8px;text-transform:uppercase}
+.r-hdr{background:var(--sf2);border-bottom:1px solid var(--bd);padding:13px 15px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.r-num{background:var(--ac);color:#fff;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.r-name{font-size:15px;font-weight:700;color:var(--tx)}
+.r-pfc{font-size:11px;color:var(--tx3);margin-top:3px}
+.r-badge{font-size:10px;background:#ddeedd;color:#2d5a2d;border-radius:99px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.r-body{padding:15px;display:none}
+.r-body.open{display:block}
+.sec-lbl{font-size:11px;color:var(--tx3);letter-spacing:.4px;font-weight:700;margin-bottom:8px}
 .ing-list{list-style:none;margin-bottom:14px}
-.ing-list li{font-size:14px;color:var(--tx2);padding:4px 0;border-bottom:1px solid var(--bg2);display:flex;align-items:center;gap:6px}
+.ing-list li{font-size:14px;color:var(--tx2);padding:5px 0;border-bottom:1px solid var(--bg2);display:flex;align-items:center;gap:6px}
 .ing-list li::before{content:'•';color:var(--ac);font-size:16px;flex-shrink:0}
 .step-list{list-style:none}
 .step-item{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
-.step-num{background:var(--ac);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
-.step-txt{font-size:14px;color:var(--tx);line-height:1.65}
+.step-num{background:var(--ac);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px}
+.step-txt{font-size:14px;color:var(--tx);line-height:1.65;flex:1}
 .tip-box{background:var(--bg2);border-left:3px solid var(--gn);border-radius:0 var(--rs) var(--rs) 0;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--tx2);line-height:1.65}
+.lf-box{background:#eef3ee;border-radius:var(--rs);padding:9px 12px;margin-bottom:14px;font-size:13px;color:#2d5a2d}
+
+/* info box */
+.info-box{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px;font-size:12px;color:var(--tx2);line-height:1.75;margin-bottom:12px}
+.info-box b{color:var(--og)}
 
 /* Bottom nav */
 .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
-.bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;text-decoration:none;color:var(--tx3);font-size:10px;letter-spacing:.3px;transition:color .15s}
+.bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;text-decoration:none;color:var(--tx3);font-size:10px;transition:color .15s}
 .bnav a.active{color:var(--ac)}.bnav a .ico{font-size:20px}
 
 @supports(padding-bottom:env(safe-area-inset-bottom)){
@@ -114,38 +133,63 @@ textarea{resize:none;line-height:1.75}
 
 <div class="wrap">
 
-  <!-- Ingredients input -->
+  <!-- Receipt scan -->
   <div class="card">
     <div class="ch">
-      <div class="ci">🥦</div><div class="ct">冷蔵庫の食材</div>
+      <div class="ci">🧾</div>
+      <div class="ct">レシート・食材写真から読み取り</div>
     </div>
     <div class="cb">
-      <label>食材を1つずつ追加してください</label>
-      <div class="tag-input-row">
-        <input type="text" id="ingInput" placeholder="例：鶏むね肉" inputmode="text" onkeydown="if(event.key==='Enter'){addTag();event.preventDefault()}">
-        <button class="add-tag-btn" onclick="addTag()">追加</button>
+      <div class="info-box"><b>💡 使い方</b><br>レシートや冷蔵庫の写真を撮るとAIが食材を自動で読み取ります。読み取り後は下のリストに追加されます。</div>
+      <div class="upz" id="upz">
+        <input type="file" id="receiptPhoto" accept="image/*" onchange="onReceiptPhoto(this)">
+        <div class="upl"><div class="up-icon">📸</div><div class="up-text">レシート / 冷蔵庫の写真</div><div class="up-sub">タップして撮影またはカメラロールから選択</div></div>
+        <img id="receiptImg" src="" alt="">
       </div>
-      <div class="tag-area" id="tagArea"></div>
+      <button class="scan-btn" id="scanBtn" onclick="scanReceipt()">🔍 写真から食材を読み取る</button>
+      <div class="ldots" id="scanLoad"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">AIが食材を読み取り中…</span></div>
+    </div>
+  </div>
+
+  <!-- Ingredient list -->
+  <div class="card">
+    <div class="ch">
+      <div class="ci">🥦</div>
+      <div class="ct">食材リスト</div>
+    </div>
+    <div class="cb">
+      <!-- Manual add -->
+      <label>食材を手動で追加</label>
+      <div class="add-row">
+        <input type="text" id="manualIng" placeholder="例：鶏むね肉" inputmode="text" onkeydown="if(event.key==='Enter'){addManual();event.preventDefault()}">
+        <button class="add-btn" onclick="addManual()">追加</button>
+      </div>
+
+      <!-- List -->
+      <div class="ing-count" id="ingCount"></div>
+      <div id="ingList"></div>
+      <button class="clear-btn" id="clearBtn" onclick="clearAll()" style="display:none">🗑 リストを全部消す</button>
     </div>
   </div>
 
   <!-- Options -->
   <div class="card">
     <div class="ch">
-      <div class="ci">⚙️</div><div class="ct">条件</div>
+      <div class="ci">⚙️</div>
+      <div class="ct">条件</div>
     </div>
     <div class="cb">
-      <div class="field">
-        <label>調理時間</label>
+      <div style="margin-bottom:13px">
+        <label style="margin-bottom:8px">調理時間</label>
         <div class="opt-grid">
           <button class="opt-btn sel" onclick="selOpt(this,'time')">15分以内</button>
           <button class="opt-btn" onclick="selOpt(this,'time')">30分以内</button>
-          <button class="opt-btn" onclick="selOpt(this,'time')">時間はかけてOK</button>
+          <button class="opt-btn" onclick="selOpt(this,'time')">時間かけてOK</button>
           <button class="opt-btn" onclick="selOpt(this,'time')">こだわらない</button>
         </div>
       </div>
-      <div class="field" style="margin-top:13px">
-        <label>食事の目的</label>
+      <div>
+        <label style="margin-bottom:8px">食事の目的</label>
         <div class="opt-grid">
           <button class="opt-btn sel" onclick="selOpt(this,'goal')">減量優先</button>
           <button class="opt-btn" onclick="selOpt(this,'goal')">筋肉維持</button>
@@ -153,21 +197,13 @@ textarea{resize:none;line-height:1.75}
           <button class="opt-btn" onclick="selOpt(this,'goal')">腸活も意識</button>
         </div>
       </div>
-      <div class="field" style="margin-top:13px">
-        <label>その他リクエスト（任意）</label>
-        <input type="text" id="extraReq" placeholder="例：簡単に作れるもの、夜食向け">
-      </div>
     </div>
   </div>
 
-  <button class="gen-btn" id="genBtn" onclick="getRecipes()">🍳 レシピを提案してもらう</button>
+  <button class="gen-btn" id="genBtn" onclick="getRecipes()">🍳 レシピを3品提案してもらう</button>
+  <div class="ldots" id="recipeLoad" style="margin-top:10px"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">AIがレシピを考えています…</span></div>
 
-  <div class="loading" id="loading">
-    <div class="dots-wrap"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    AIがローファット向けレシピを考えています…
-  </div>
-
-  <div class="recipe-list" id="recipeList"></div>
+  <div id="recipeList" style="margin-top:10px"></div>
 
 </div>
 
@@ -178,123 +214,224 @@ textarea{resize:none;line-height:1.75}
 </div>
 
 <script>
-let tags=[];
+// ── Storage key ──
+const ING_KEY = 'fridgeIngredients';
 
-function addTag(){
-  const inp=document.getElementById('ingInput');
-  const val=inp.value.trim();
-  if(!val||tags.includes(val))return;
-  tags.push(val);
-  renderTags();
-  inp.value='';
+// ── Load ingredients ──
+function loadIngs() {
+  return JSON.parse(localStorage.getItem(ING_KEY) || '[]');
+}
+function saveIngs(arr) {
+  localStorage.setItem(ING_KEY, JSON.stringify(arr));
+}
+
+// ── Render list ──
+function renderList() {
+  const ings = loadIngs();
+  const listEl = document.getElementById('ingList');
+  const countEl = document.getElementById('ingCount');
+  const clearBtn = document.getElementById('clearBtn');
+
+  if (!ings.length) {
+    listEl.innerHTML = '<div class="empty-msg">食材がありません<br>レシートを読み取るか手動で追加してください</div>';
+    countEl.textContent = '';
+    clearBtn.style.display = 'none';
+    return;
+  }
+
+  countEl.innerHTML = `食材 <b>${ings.length}品</b> 登録中`;
+  clearBtn.style.display = 'block';
+
+  listEl.innerHTML = ings.map((ing, i) => `
+    <div class="ing-item" id="ing-${i}">
+      <div class="ing-name">🥬 ${ing}</div>
+      <button class="ing-del" onclick="deleteIng(${i})">削除</button>
+    </div>
+  `).join('');
+}
+
+function deleteIng(idx) {
+  const ings = loadIngs();
+  ings.splice(idx, 1);
+  saveIngs(ings);
+  renderList();
+}
+
+function clearAll() {
+  if (confirm('食材リストを全部削除しますか？')) {
+    saveIngs([]);
+    renderList();
+  }
+}
+
+function addIngredients(newIngs) {
+  const ings = loadIngs();
+  newIngs.forEach(ing => {
+    const clean = ing.trim();
+    if (clean && !ings.includes(clean)) ings.push(clean);
+  });
+  saveIngs(ings);
+  renderList();
+}
+
+// ── Manual add ──
+function addManual() {
+  const inp = document.getElementById('manualIng');
+  const val = inp.value.trim();
+  if (!val) return;
+  addIngredients([val]);
+  inp.value = '';
   inp.focus();
 }
 
-function removeTag(val){
-  tags=tags.filter(t=>t!==val);
-  renderTags();
+// ── Receipt photo ──
+let receiptB64 = null;
+
+function onReceiptPhoto(input) {
+  if (!input.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    receiptB64 = e.target.result.split(',')[1];
+    document.getElementById('receiptImg').src = e.target.result;
+    document.getElementById('upz').classList.add('hp');
+    document.getElementById('scanBtn').classList.add('show');
+  };
+  reader.readAsDataURL(input.files[0]);
 }
 
-function renderTags(){
-  const area=document.getElementById('tagArea');
-  area.innerHTML=tags.map(t=>`<div class="tag">${t}<span class="rm" onclick="removeTag('${t}')">✕</span></div>`).join('');
+async function scanReceipt() {
+  if (!receiptB64) return;
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  document.getElementById('scanLoad').classList.add('show');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: receiptB64 } },
+            { type: 'text', text: 'この画像（レシートまたは冷蔵庫の写真）から食材・食品名だけを抽出してください。日本語で食材名のみをカンマ区切りで返してください。加工食品は一般的な名前で。余計な説明は不要です。例：鶏むね肉,キャベツ,卵,豆腐,ブロッコリー' }
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content?.[0]?.text || '';
+    const items = txt.split(/[,、，\n]/).map(s => s.trim()).filter(s => s.length > 0 && s.length < 20);
+    if (items.length) {
+      addIngredients(items);
+      alert(`✅ ${items.length}品の食材を追加しました！\n${items.join('、')}`);
+    } else {
+      alert('食材を読み取れませんでした。写真を変えて試してみてください。');
+    }
+  } catch(e) {
+    alert('読み取りに失敗しました。もう一度試してください。');
+  } finally {
+    document.getElementById('scanLoad').classList.remove('show');
+    btn.disabled = false;
+  }
 }
 
-const optSel={time:'15分以内',goal:'減量優先'};
-function selOpt(btn,group){
-  btn.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel'));
+// ── Options ──
+const optSel = { time: '15分以内', goal: '減量優先' };
+function selOpt(btn, group) {
+  btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
-  optSel[group]=btn.textContent;
+  optSel[group] = btn.textContent;
 }
 
-async function getRecipes(){
-  if(!tags.length){alert('食材を1つ以上追加してください');return;}
-  const btn=document.getElementById('genBtn');
-  btn.disabled=true;
-  document.getElementById('loading').classList.add('show');
-  document.getElementById('recipeList').innerHTML='';
+// ── Get Recipes ──
+async function getRecipes() {
+  const ings = loadIngs();
+  if (!ings.length) { alert('食材リストが空です。先に食材を追加してください'); return; }
 
-  const extra=document.getElementById('extraReq').value.trim();
-  const prompt=`あなたはローファットダイエット（高たんぱく・低脂質・中炭水化物）の専門栄養士です。
-以下の食材を使って夕食のレシピを3品提案してください。
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  document.getElementById('recipeLoad').classList.add('show');
+  document.getElementById('recipeList').innerHTML = '';
 
-食材：${tags.join('、')}
-調理時間：${optSel.time}
+  const prompt = `あなたはローファットダイエット（高たんぱく・低脂質・中炭水化物）の専門栄養士です。
+以下の食材リストから夕食レシピを3品提案してください。
+
+食材リスト：${ings.join('、')}
+調理時間の希望：${optSel.time}
 目的：${optSel.goal}
-${extra?'その他：'+extra:''}
 
-ローファットダイエットのルール：
-- たんぱく質を多く（目安130g以上/日）
-- 脂質を抑える（目安50g以下/日）
-- 良質な油のみ使用
-- 腸活のため食物繊維も意識
+ローファットのルール：たんぱく質多め・脂質少なめ・良質な油のみ・食物繊維も意識
 
-必ず以下のJSON形式のみで返答してください。マークダウンや説明文は不要です：
+必ず以下のJSON形式のみで返答してください。前後の説明文やマークダウンは不要です：
 [
   {
     "name": "料理名",
-    "time": "調理時間（分）",
-    "kcal": 推定カロリー(数値),
-    "protein": 推定たんぱく質g(数値),
-    "fat": 推定脂質g(数値),
-    "carb": 推定炭水化物g(数値),
-    "lowfat_point": "ローファット的に良い点（1文）",
+    "time": "調理時間",
+    "kcal": 推定カロリー数値,
+    "protein": 推定たんぱく質g数値,
+    "fat": 推定脂質g数値,
+    "carb": 推定炭水化物g数値,
+    "lowfat_point": "ローファット的に良い点1文",
     "ingredients": ["食材1 分量", "食材2 分量"],
     "steps": ["手順1", "手順2", "手順3"],
-    "tip": "調理のコツや注意点（1文）"
+    "tip": "調理のコツ1文"
   }
 ]`;
 
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:3000,
-        messages:[{role:'user',content:prompt}]
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
       })
     });
-    const data=await res.json();
-    const txt=data.content?.[0]?.text||'';
-    const clean=txt.replace(/```json|```/g,'').trim();
-    const recipes=JSON.parse(clean);
+    const data = await res.json();
+    const txt = data.content?.[0]?.text || '';
+    const clean = txt.replace(/```json|```/g, '').trim();
+    const start = clean.indexOf('[');
+    const end = clean.lastIndexOf(']');
+    const jsonStr = clean.slice(start, end + 1);
+    const recipes = JSON.parse(jsonStr);
     renderRecipes(recipes);
-  }catch(e){
-    document.getElementById('recipeList').innerHTML=`<div style="text-align:center;padding:20px;color:var(--rd);font-size:13px">⚠️ 提案の取得に失敗しました<br>もう一度お試しください</div>`;
-  }finally{
-    document.getElementById('loading').classList.remove('show');
-    btn.disabled=false;
+  } catch(e) {
+    document.getElementById('recipeList').innerHTML = `<div style="text-align:center;padding:24px;color:var(--rd);font-size:13px">⚠️ レシピの取得に失敗しました<br>もう一度試してください</div>`;
+  } finally {
+    document.getElementById('recipeLoad').classList.remove('show');
+    btn.disabled = false;
   }
 }
 
-function renderRecipes(recipes){
-  const list=document.getElementById('recipeList');
-  list.innerHTML=recipes.map((r,i)=>`
+function renderRecipes(recipes) {
+  document.getElementById('recipeList').innerHTML = recipes.map((r, i) => `
     <div class="recipe-card">
-      <div class="recipe-hdr" onclick="toggleRecipe(this)">
-        <div class="recipe-num">${i+1}</div>
+      <div class="r-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="r-num">${i + 1}</div>
         <div style="flex:1">
-          <div class="recipe-name">${r.name}</div>
-          <div class="recipe-pfc">約${r.kcal}kcal　P:${r.protein}g　F:${r.fat}g　C:${r.carb}g　⏱${r.time}分</div>
+          <div class="r-name">${r.name}</div>
+          <div class="r-pfc">約${r.kcal}kcal　P:${r.protein}g　F:${r.fat}g　C:${r.carb}g　⏱${r.time}</div>
         </div>
-        <div class="recipe-badge">✓ ローファット</div>
+        <div class="r-badge">✓ ローファット</div>
       </div>
-      <div class="recipe-body">
-        <div style="background:#eef3ee;border-radius:var(--rs);padding:9px 12px;margin-bottom:14px;font-size:13px;color:#2d5a2d">🌿 ${r.lowfat_point}</div>
-        <div class="section-label">材料</div>
-        <ul class="ing-list">${r.ingredients.map(ing=>`<li>${ing}</li>`).join('')}</ul>
-        <div class="section-label">作り方</div>
-        <ol class="step-list">${r.steps.map((s,j)=>`<div class="step-item"><div class="step-num">${j+1}</div><div class="step-txt">${s}</div></div>`).join('')}</ol>
-        ${r.tip?`<div class="tip-box">💡 ${r.tip}</div>`:''}
+      <div class="r-body">
+        <div class="lf-box">🌿 ${r.lowfat_point}</div>
+        <div class="sec-lbl">材料</div>
+        <ul class="ing-list">${r.ingredients.map(ing => `<li>${ing}</li>`).join('')}</ul>
+        <div class="sec-lbl">作り方</div>
+        <div class="step-list">${r.steps.map((s, j) => `<div class="step-item"><div class="step-num">${j + 1}</div><div class="step-txt">${s}</div></div>`).join('')}</div>
+        ${r.tip ? `<div class="tip-box">💡 ${r.tip}</div>` : ''}
       </div>
     </div>
   `).join('');
 }
 
-function toggleRecipe(hdr){
-  hdr.nextElementSibling.classList.toggle('open');
-}
+// ── Init ──
+renderList();
 </script>
 </body>
 </html>

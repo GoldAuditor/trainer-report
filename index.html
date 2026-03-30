@@ -302,6 +302,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; h
 
       <div class="div"></div>
       <div style="font-size:11px;color:var(--tx3);margin-bottom:8px;font-weight:500" id="pfcModeLabel">PFC入力（Claude推定値 or 手入力）</div>
+      <textarea id="pfcPaste" placeholder="ClaudeのPFC回答をここに貼り付け&#10;例）&#10;総カロリー：約 1800 kcal&#10;たんぱく質（P）：約 150 g&#10;脂質（F）：約 40 g&#10;炭水化物（C）：約 200 g" style="background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:var(--jp);font-size:14px;padding:11px 12px;width:100%;-webkit-appearance:none;outline:none;resize:none;min-height:100px;line-height:1.75;margin-bottom:8px" oninput="autoParsePFC()"></textarea>
+      <button onclick="parsePFC()" class="abtn" style="margin-bottom:13px">⚡ 数値を自動で読み取る</button>
+      <div id="parseMsg" style="display:none;text-align:center;font-size:12px;color:var(--gn);margin-bottom:10px;font-weight:700"></div>
       <div class="fr c3">
         <div class="field"><label>総 kcal</label><input type="number" id="p_kcal" inputmode="numeric" placeholder="1900" oninput="updPFC()"></div>
         <div class="field"><label>P たんぱく質 g</label><input type="number" id="p_p" inputmode="numeric" placeholder="150" oninput="updPFC()"></div>
@@ -694,6 +697,38 @@ function showToast(msg) {
 
 // ── Helpers ──
 function v(id) { return (document.getElementById(id)?.value||'').trim(); }
+
+// ── Parse PFC from Claude response ──
+function parsePFC() {
+  const txt = document.getElementById('pfcPaste').value;
+  if (!txt.trim()) { alert('Claudeの回答を貼り付けてください'); return; }
+  const num = s => (s||'').match(/[0-9]+/)?.[0] || null;
+  const kcalV = num(txt.match(/(?:総カロリー|カロリー)[^0-9]*([0-9]+)/)?.[1] || txt.match(/([0-9]+)\s*kcal/i)?.[1]);
+  const pV    = num(txt.match(/(?:たんぱく質|タンパク質|P）)[^0-9]*([0-9]+)/)?.[1]);
+  const fV    = num(txt.match(/脂質[^0-9]*([0-9]+)/)?.[1]);
+  const cV    = num(txt.match(/炭水化物[^0-9]*([0-9]+)/)?.[1]);
+  const applied = [];
+  if (kcalV) { document.getElementById('p_kcal').value = kcalV; applied.push(kcalV + 'kcal'); }
+  if (pV)    { document.getElementById('p_p').value    = pV;    applied.push('P:' + pV + 'g'); }
+  if (fV)    { document.getElementById('p_f').value    = fV;    applied.push('F:' + fV + 'g'); }
+  if (cV)    { document.getElementById('p_c').value    = cV;    applied.push('C:' + cV + 'g'); }
+  updPFC();
+  const msg = document.getElementById('parseMsg');
+  msg.style.display = 'block';
+  if (applied.length) {
+    msg.textContent = '✅ 反映完了：' + applied.join('　');
+    msg.style.color = 'var(--gn)';
+  } else {
+    msg.textContent = '⚠️ 読み取れませんでした。手動で入力してください。';
+    msg.style.color = 'var(--rd)';
+  }
+  setTimeout(() => { msg.style.display = 'none'; }, 4000);
+}
+
+function autoParsePFC() {
+  const txt = document.getElementById('pfcPaste').value;
+  if (txt.split('\n').length >= 3 && txt.includes('g')) parsePFC();
+}
 
 // ── Generate report ──
 function gen() {

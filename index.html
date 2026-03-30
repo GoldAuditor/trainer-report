@@ -196,9 +196,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; h
     <p id="modeLabel">ローファットダイエット記録</p>
   </div>
   <div class="hdr-r">
-    <div class="mn" id="hMon"></div>
-    <div class="dy" id="hDay"></div>
-    <div class="wd" id="hWd"></div>
+    <input type="date" id="reportDate" style="background:transparent;border:none;border-bottom:1px solid var(--bd);color:var(--ac);font-family:var(--se);font-size:13px;outline:none;text-align:right;-webkit-appearance:none;padding:2px 0;cursor:pointer" onchange="updDate()">
+    <div class="wd" id="hWd" style="margin-top:2px"></div>
   </div>
 </div>
 
@@ -225,7 +224,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; h
     <div class="cb">
       <div class="hint" style="margin-bottom:13px">
         <b>使い方</b><br>
-        ヘルスケアアプリ → プロフィール →「すべてのデータを書き出す」→ ZIP解凍 → export.xml を選択
+        ヘルスケアアプリ → プロフィール →「すべてのデータを書き出す」→ ZIP解凍 → export.xml を選択<br><b>※ 右上の日付を先に選択すると、その日のデータを取り込みます（昨日も対応）</b>
       </div>
       <div class="upz" id="xmlUpz">
         <input type="file" id="xmlFile" accept=".xml" onchange="importXML(this)">
@@ -451,9 +450,22 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; h
 const now = new Date();
 const WD  = ['日','月','火','水','木','金','土'];
 const MO  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-document.getElementById('hMon').textContent = MO[now.getMonth()] + ' ' + now.getFullYear();
-document.getElementById('hDay').textContent = String(now.getDate()).padStart(2,'0');
-document.getElementById('hWd').textContent  = WD[now.getDay()] + '曜日';
+// Set date picker default to today
+const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+document.getElementById('reportDate').value = todayStr;
+document.getElementById('reportDate').max = todayStr;
+
+function updDate() {
+  const d = getReportDate();
+  document.getElementById('hWd').textContent = WD[d.getDay()] + '曜日';
+}
+
+function getReportDate() {
+  const val = document.getElementById('reportDate').value;
+  return val ? new Date(val + 'T00:00:00') : now;
+}
+
+updDate();
 
 // ── Card toggle ──
 function tog(h) {
@@ -624,38 +636,68 @@ function importXML(input) {
   reader.onload = e => {
     try {
       const xml = new DOMParser().parseFromString(e.target.result, 'text/xml');
-      const today = new Date().toISOString().slice(0,10);
-      const yest  = new Date(Date.now()-86400000).toISOString().slice(0,10);
+
+      // 選択中の日付を取得
+      const selectedDate = document.getElementById('reportDate').value;
+      const targetDate = selectedDate || new Date().toISOString().slice(0,10);
+      const prevDate   = new Date(new Date(targetDate).getTime() - 86400000).toISOString().slice(0,10);
 
       function getVals(type, date) {
         const nodes = xml.querySelectorAll('Record[type="' + type + '"]');
         const vals = [];
-        nodes.forEach(n => { if ((n.getAttribute('startDate')||'').slice(0,10) === date) vals.push(parseFloat(n.getAttribute('value'))); });
+        nodes.forEach(n => {
+          if ((n.getAttribute('startDate')||'').slice(0,10) === date)
+            vals.push(parseFloat(n.getAttribute('value')));
+        });
         return vals.length ? vals : null;
       }
       function sum(a) { return a ? a.reduce((x,y)=>x+y,0) : null; }
       function avg(a) { return a ? a.reduce((x,y)=>x+y,0)/a.length : null; }
 
-      const steps   = sum(getVals('HKQuantityTypeIdentifierStepCount', today));
-      const calB    = sum(getVals('HKQuantityTypeIdentifierActiveEnergyBurned', today));
-      const hr      = avg(getVals('HKQuantityTypeIdentifierHeartRate', today));
-      const hrv     = avg(getVals('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', today));
-      let wVals     = getVals('HKQuantityTypeIdentifierBodyMass', today) || getVals('HKQuantityTypeIdentifierBodyMass', yest);
-      let bfVals    = getVals('HKQuantityTypeIdentifierBodyFatPercentage', today) || getVals('HKQuantityTypeIdentifierBodyFatPercentage', yest);
-      const spo2    = avg(getVals('HKQuantityTypeIdentifierOxygenSaturation', today));
+      // 選択日のデータ優先、なければ前日
+      const steps  = sum(getVals('HKQuantityTypeIdentifierStepCount', targetDate));
+      const calB   = sum(getVals('HKQuantityTypeIdentifierActiveEnergyBurned', targetDate));
+      const hr     = avg(getVals('HKQuantityTypeIdentifierHeartRate', targetDate));
+      const hrv    = avg(getVals('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', targetDate));
+      const spo2   = avg(getVals('HKQuantityTypeIdentifierOxygenSaturation', targetDate));
+      let wVals  = getVals('HKQuantityTypeIdentifierBodyMass', targetDate)  || getVals('HKQuantityTypeIdentifierBodyMass', prevDate);
+      let bfVals = getVals('HKQuantityTypeIdentifierBodyFatPercentage', targetDate) || getVals('HKQuantityTypeIdentifierBodyFatPercentage', prevDate);
+
+      // 睡眠（選択日 or 前日夜）
+      const sleepNodes = xml.querySelectorAll('Record[type="HKCategoryTypeIdentifierSleepAnalysis"]');
+      let sleepMin = 0;
+      sleepNodes.forEach(n => {
+        const d   = (n.getAttribute('startDate')||'').slice(0,10);
+        const val = n.getAttribute('value')||'';
+        if ((d === targetDate || d === prevDate) && val.includes('Asleep')) {
+          const s = new Date(n.getAttribute('startDate'));
+          const e2 = new Date(n.getAttribute('endDate'));
+          sleepMin += (e2 - s) / 60000;
+        }
+      });
 
       const applied = [];
-      if (steps)  { document.getElementById('steps').value    = Math.round(steps); applied.push('歩数：' + Math.round(steps).toLocaleString() + '歩'); }
-      if (calB)   { document.getElementById('cal_burn').value = Math.round(calB);  applied.push('消費：' + Math.round(calB) + 'kcal'); updPFC(); }
-      if (hr)     { document.getElementById('hr').value       = Math.round(hr);    applied.push('心拍：' + Math.round(hr) + 'bpm'); }
-      if (hrv)    { document.getElementById('hrv').value      = Math.round(hrv);   applied.push('HRV：' + Math.round(hrv) + 'ms'); }
+      if (steps)  { document.getElementById('steps').value    = Math.round(steps);   applied.push('歩数：' + Math.round(steps).toLocaleString() + '歩'); }
+      if (calB)   { document.getElementById('cal_burn').value = Math.round(calB);    applied.push('消費：' + Math.round(calB) + 'kcal'); updPFC(); }
+      if (hr)     { document.getElementById('hr').value       = Math.round(hr);      applied.push('心拍：' + Math.round(hr) + 'bpm'); }
+      if (hrv)    { document.getElementById('hrv').value      = Math.round(hrv);     applied.push('HRV：' + Math.round(hrv) + 'ms'); }
       if (wVals)  { const w = Math.round(wVals[wVals.length-1]*10)/10; document.getElementById('weight').value = w; applied.push('体重：' + w + 'kg'); updGoal(); }
       if (bfVals) { const bf = Math.round(bfVals[bfVals.length-1]*1000)/10; document.getElementById('bodyfat').value = bf; applied.push('体脂肪：' + bf + '%'); }
       if (spo2)   { document.getElementById('spo2').value = Math.round(spo2*1000)/10; applied.push('SpO₂：' + Math.round(spo2*1000)/10 + '%'); }
+      if (sleepMin > 30) {
+        const h = Math.floor(sleepMin/60), m = Math.round(sleepMin%60);
+        applied.push('睡眠：' + h + '時間' + m + '分');
+      }
 
+      // 日付ラベル更新
+      const dateLabel = targetDate === new Date().toISOString().slice(0,10) ? '今日' : targetDate;
       const res = document.getElementById('xmlResult');
       res.style.display = 'block';
-      res.innerHTML = applied.length ? '✅ <b>反映完了！</b><br>' + applied.join('　') : '⚠️ 今日・昨日のデータが見つかりませんでした。';
+      if (applied.length) {
+        res.innerHTML = '✅ <b>' + dateLabel + 'のデータを反映</b><br>' + applied.join('　');
+      } else {
+        res.innerHTML = '⚠️ ' + dateLabel + 'のデータが見つかりませんでした。<br>XMLファイルに該当日のデータが含まれているか確認してください。';
+      }
     } catch(err) {
       const res = document.getElementById('xmlResult');
       res.style.display = 'block';
@@ -667,7 +709,7 @@ function importXML(input) {
 
 // ── Save for analysis ──
 function saveData() {
-  const key = now.toISOString().slice(0,10);
+  const key = document.getElementById('reportDate').value || now.toISOString().slice(0,10);
   const rec = {
     date:key,
     weight:parseFloat(document.getElementById('weight').value)||null,
@@ -732,7 +774,8 @@ function autoParsePFC() {
 
 // ── Generate report ──
 function gen() {
-  const wdStr = (now.getMonth()+1) + '/' + now.getDate() + '(' + WD[now.getDay()] + ')';
+  const d = getReportDate();
+  const wdStr = (d.getMonth()+1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')';
   const wt=v('weight'),bf=v('bodyfat'),bmi=v('bmi'),hr=v('hr'),hrv=v('hrv'),spo2=v('spo2');
   const steps=v('steps'),calB=v('cal_burn'),actMin=v('act_min');
   const sIn=v('s_in'),sOut=v('s_out'),sq=v('s_q');

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trainer Log">
+<title>分析 | Trainer Log</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f4efe6;--bg2:#ece6d8;--sf:#faf7f1;--sf2:#f0e9d8;
+  --bd:#d5c9b4;--bd2:#bfb09a;
+  --tx:#332b22;--tx2:#6a5c4c;--tx3:#9a8a76;
+  --ac:#7b6249;--gn:#4d7a5c;--og:#a07040;--rd:#8b4848;--bu:#4a6880;
+  --sh:rgba(80,60,40,.09);
+  --r:14px;--rs:9px;
+  --jp:'Zen Kaku Gothic New',sans-serif;
+  --se:'Playfair Display',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:var(--jp);padding:0 0 90px;font-size:15px}
+
+.hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:52px 18px 16px;position:sticky;top:0;z-index:50}
+.hdr h1{font-family:var(--se);font-size:20px;color:var(--ac)}
+.hdr p{font-size:11px;color:var(--tx3);margin-top:3px}
+
+/* Period tabs */
+.period-tabs{display:flex;gap:6px;padding:14px 14px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.period-tabs::-webkit-scrollbar{display:none}
+.ptab{background:var(--sf);border:1.5px solid var(--bd);border-radius:99px;color:var(--tx2);cursor:pointer;font-family:var(--jp);font-size:13px;padding:7px 16px;white-space:nowrap;-webkit-appearance:none;transition:all .15s;flex-shrink:0}
+.ptab.active{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.ptab:active{opacity:.8}
+
+/* Summary cards */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 14px 0}
+.sum-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;box-shadow:0 2px 6px var(--sh)}
+.sum-label{font-size:11px;color:var(--tx3);letter-spacing:.4px;margin-bottom:6px}
+.sum-val{font-size:24px;font-family:var(--se);color:var(--ac);line-height:1}
+.sum-sub{font-size:11px;color:var(--tx3);margin-top:4px}
+.sum-trend{font-size:12px;font-weight:700;margin-top:2px}
+.trend-down{color:var(--gn)}.trend-up{color:var(--rd)}.trend-flat{color:var(--tx3)}
+
+/* Chart cards */
+.wrap{padding:14px 14px 0}
+.chart-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 2px 6px var(--sh)}
+.chart-hdr{padding:13px 15px 10px;background:var(--sf2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.chart-icon{font-size:16px;width:30px;height:30px;background:var(--bg);border:1px solid var(--bd);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chart-title{font-size:14px;font-weight:700;color:var(--tx)}
+.chart-body{padding:14px;position:relative}
+.chart-body canvas{max-height:200px}
+
+/* No data */
+.nodata{text-align:center;padding:40px 20px;color:var(--tx3);font-size:13px;line-height:1.8}
+.nodata b{color:var(--ac);font-size:15px;display:block;margin-bottom:6px}
+
+/* Bottom nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.bnav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;text-decoration:none;color:var(--tx3);font-size:10px;letter-spacing:.3px;transition:color .15s}
+.bnav a.active{color:var(--ac)}
+.bnav a .ico{font-size:20px}
+
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+  .hdr{padding-top:max(52px,calc(44px + env(safe-area-inset-top)))}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>分析ダッシュボード</h1>
+  <p>記録データの可視化</p>
+</div>
+
+<!-- Period selector -->
+<div class="period-tabs">
+  <button class="ptab active" onclick="setPeriod(1,this)">今日</button>
+  <button class="ptab" onclick="setPeriod(7,this)">1週間</button>
+  <button class="ptab" onclick="setPeriod(30,this)">1ヶ月</button>
+  <button class="ptab" onclick="setPeriod(90,this)">3ヶ月</button>
+  <button class="ptab" onclick="setPeriod(180,this)">6ヶ月</button>
+</div>
+
+<!-- Summary -->
+<div class="sum-grid" id="sumGrid">
+  <div class="sum-card"><div class="sum-label">最新体重</div><div class="sum-val" id="sWeight">—</div><div class="sum-trend" id="sTrend">—</div></div>
+  <div class="sum-card"><div class="sum-label">平均歩数</div><div class="sum-val" id="sSteps">—</div><div class="sum-sub">steps / 日</div></div>
+  <div class="sum-card"><div class="sum-label">平均摂取</div><div class="sum-val" id="sKcal">—</div><div class="sum-sub">kcal / 日</div></div>
+  <div class="sum-card"><div class="sum-label">平均睡眠質</div><div class="sum-val" id="sSleep">—</div><div class="sum-sub">/ 5点</div></div>
+</div>
+
+<div class="wrap">
+  <!-- Weight chart -->
+  <div class="chart-card">
+    <div class="chart-hdr"><div class="chart-icon">⚖️</div><div class="chart-title">体重の推移</div></div>
+    <div class="chart-body" id="weightArea"><canvas id="weightChart"></canvas></div>
+  </div>
+
+  <!-- Calorie chart -->
+  <div class="chart-card">
+    <div class="chart-hdr"><div class="chart-icon">🔥</div><div class="chart-title">カロリー収支</div></div>
+    <div class="chart-body" id="kcalArea"><canvas id="kcalChart"></canvas></div>
+  </div>
+
+  <!-- PFC chart -->
+  <div class="chart-card">
+    <div class="chart-hdr"><div class="chart-icon">🥗</div><div class="chart-title">PFC推移</div></div>
+    <div class="chart-body" id="pfcArea"><canvas id="pfcChart"></canvas></div>
+  </div>
+
+  <!-- Steps chart -->
+  <div class="chart-card">
+    <div class="chart-hdr"><div class="chart-icon">👟</div><div class="chart-title">歩数・消費カロリー</div></div>
+    <div class="chart-body" id="stepsArea"><canvas id="stepsChart"></canvas></div>
+  </div>
+
+  <!-- Sleep chart -->
+  <div class="chart-card">
+    <div class="chart-hdr"><div class="chart-icon">🌙</div><div class="chart-title">睡眠の質</div></div>
+    <div class="chart-body" id="sleepArea"><canvas id="sleepChart"></canvas></div>
+  </div>
+</div>
+
+<div class="bnav">
+  <a href="index.html"><span class="ico">📋</span>報告書</a>
+  <a href="analysis.html" class="active"><span class="ico">📈</span>分析</a>
+  <a href="recipe.html"><span class="ico">🍳</span>料理提案</a>
+</div>
+
+<script>
+const COLORS={ac:'#7b6249',gn:'#4d7a5c',og:'#a07040',rd:'#8b4848',bu:'#4a6880',tx3:'#9a8a76'};
+
+Chart.defaults.font.family="'Zen Kaku Gothic New',sans-serif";
+Chart.defaults.color=COLORS.tx3;
+
+let charts={};
+let currentDays=1;
+
+function getRecords(days){
+  const all=JSON.parse(localStorage.getItem('trainerLog')||'{}');
+  const keys=Object.keys(all).sort();
+  if(!keys.length)return[];
+  if(days===1){
+    const today=keys[keys.length-1];
+    return all[today]?[all[today]]:[];
+  }
+  const cutoff=new Date();
+  cutoff.setDate(cutoff.getDate()-days+1);
+  const cutStr=cutoff.toISOString().slice(0,10);
+  return keys.filter(k=>k>=cutStr).map(k=>all[k]);
+}
+
+function fmtDate(dateStr,days){
+  const d=new Date(dateStr);
+  if(days<=7)return`${d.getMonth()+1}/${d.getDate()}`;
+  if(days<=30)return`${d.getMonth()+1}/${d.getDate()}`;
+  return`${d.getMonth()+1}月`;
+}
+
+function avg(arr,key){
+  const vals=arr.map(r=>r[key]).filter(v=>v!=null);
+  if(!vals.length)return null;
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10;
+}
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function noDataMsg(areaId){
+  document.getElementById(areaId).innerHTML=`<div class="nodata"><b>データがありません</b>報告書ページで「データを保存」ボタンを押すと<br>ここにグラフが表示されます📊</div>`;
+}
+
+function setPeriod(days,btn){
+  currentDays=days;
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll(days);
+}
+
+function renderAll(days){
+  const recs=getRecords(days);
+
+  // Summary
+  const latest=recs.length?recs[recs.length-1]:null;
+  const first=recs.length>1?recs[0]:null;
+  document.getElementById('sWeight').textContent=latest?.weight?latest.weight+'kg':'—';
+  if(latest?.weight&&first?.weight){
+    const diff=(latest.weight-first.weight).toFixed(1);
+    const el=document.getElementById('sTrend');
+    el.textContent=diff>0?`▲ ${diff}kg`:diff<0?`▼ ${Math.abs(diff)}kg`:'変化なし';
+    el.className='sum-trend '+(diff<0?'trend-down':diff>0?'trend-up':'trend-flat');
+  } else {document.getElementById('sTrend').textContent='—';}
+  const avgSteps=avg(recs,'steps');
+  document.getElementById('sSteps').textContent=avgSteps?avgSteps.toLocaleString():'—';
+  const avgKcal=avg(recs,'cal_in');
+  document.getElementById('sKcal').textContent=avgKcal||'—';
+  const avgSleep=avg(recs,'sleep_q');
+  document.getElementById('sSleep').textContent=avgSleep?avgSleep.toFixed(1):'—';
+
+  if(!recs.length){
+    ['weightArea','kcalArea','pfcArea','stepsArea','sleepArea'].forEach(id=>{
+      destroyChart(id.replace('Area','Chart'));
+      noDataMsg(id);
+    });
+    return;
+  }
+
+  const labels=recs.map(r=>fmtDate(r.date,days));
+
+  // Weight
+  destroyChart('weightChart');
+  const wVals=recs.map(r=>r.weight);
+  if(wVals.some(v=>v)){
+    document.getElementById('weightArea').innerHTML='<canvas id="weightChart"></canvas>';
+    charts.weightChart=new Chart(document.getElementById('weightChart'),{
+      type:'line',
+      data:{labels,datasets:[{label:'体重 (kg)',data:wVals,borderColor:COLORS.ac,backgroundColor:COLORS.ac+'22',borderWidth:2.5,pointRadius:4,pointBackgroundColor:COLORS.ac,tension:.35,fill:true}]},
+      options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y}kg`}}},scales:{y:{suggestedMin:68,suggestedMax:73,ticks:{callback:v=>v+'kg'}}}}
+    });
+  } else noDataMsg('weightArea');
+
+  // Calorie balance
+  destroyChart('kcalChart');
+  const inVals=recs.map(r=>r.cal_in);
+  const burnVals=recs.map(r=>r.cal_burn);
+  if(inVals.some(v=>v)){
+    document.getElementById('kcalArea').innerHTML='<canvas id="kcalChart"></canvas>';
+    charts.kcalChart=new Chart(document.getElementById('kcalChart'),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'摂取',data:inVals,backgroundColor:COLORS.og+'bb',borderRadius:4},
+        {label:'消費',data:burnVals,backgroundColor:COLORS.gn+'bb',borderRadius:4}
+      ]},
+      options:{responsive:true,plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},scales:{y:{ticks:{callback:v=>v+'kcal'}}}}
+    });
+  } else noDataMsg('kcalArea');
+
+  // PFC
+  destroyChart('pfcChart');
+  const pVals=recs.map(r=>r.protein);
+  const fVals=recs.map(r=>r.fat);
+  const cVals=recs.map(r=>r.carb);
+  if(pVals.some(v=>v)){
+    document.getElementById('pfcArea').innerHTML='<canvas id="pfcChart"></canvas>';
+    charts.pfcChart=new Chart(document.getElementById('pfcChart'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'P たんぱく質',data:pVals,borderColor:COLORS.gn,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:.35},
+        {label:'F 脂質',data:fVals,borderColor:COLORS.rd,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:.35},
+        {label:'C 炭水化物',data:cVals,borderColor:COLORS.og,backgroundColor:'transparent',borderWidth:2,pointRadius:3,tension:.35}
+      ]},
+      options:{responsive:true,plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}},scales:{y:{ticks:{callback:v=>v+'g'}}}}
+    });
+  } else noDataMsg('pfcArea');
+
+  // Steps
+  destroyChart('stepsChart');
+  const stVals=recs.map(r=>r.steps);
+  if(stVals.some(v=>v)){
+    document.getElementById('stepsArea').innerHTML='<canvas id="stepsChart"></canvas>';
+    charts.stepsChart=new Chart(document.getElementById('stepsChart'),{
+      type:'bar',
+      data:{labels,datasets:[{label:'歩数',data:stVals,backgroundColor:COLORS.bu+'bb',borderRadius:4}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v.toLocaleString()+'歩'}}}}
+    });
+  } else noDataMsg('stepsArea');
+
+  // Sleep
+  destroyChart('sleepChart');
+  const slVals=recs.map(r=>r.sleep_q);
+  if(slVals.some(v=>v)){
+    document.getElementById('sleepArea').innerHTML='<canvas id="sleepChart"></canvas>';
+    charts.sleepChart=new Chart(document.getElementById('sleepChart'),{
+      type:'line',
+      data:{labels,datasets:[{label:'睡眠の質',data:slVals,borderColor:COLORS.bu,backgroundColor:COLORS.bu+'22',borderWidth:2.5,pointRadius:4,pointBackgroundColor:COLORS.bu,tension:.35,fill:true}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:1,max:5,ticks:{stepSize:1,callback:v=>v+'点'}}}}
+    });
+  } else noDataMsg('sleepArea');
+}
+
+renderAll(1);
+</script>
+</body>
+</html>

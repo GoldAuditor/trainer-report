@@ -425,7 +425,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:28px; h
 </div>
 
 <div style="padding:0 14px;margin-top:8px">
-  <button class="save-btn" onclick="saveData()">💾 今日のデータを保存（分析用）</button>
+  <button class="save-btn" onclick="saveData(false)">💾 データを保存（分析用）</button>
   <button class="gen-btn" onclick="gen()">📋 LINE報告書を生成する</button>
 </div>
 
@@ -708,7 +708,7 @@ function importXML(input) {
 }
 
 // ── Save for analysis ──
-function saveData() {
+function saveData(silent) {
   const key = document.getElementById('reportDate').value || now.toISOString().slice(0,10);
   const rec = {
     date:key,
@@ -727,7 +727,100 @@ function saveData() {
   const all = JSON.parse(localStorage.getItem('trainerLog')||'{}');
   all[key] = rec;
   localStorage.setItem('trainerLog', JSON.stringify(all));
-  showToast('💾 データを保存しました！');
+
+  // 今日の入力途中データも別途保存
+  localStorage.setItem('trainerDraft', JSON.stringify({
+    weight: document.getElementById('weight').value,
+    bodyfat: document.getElementById('bodyfat').value,
+    bmi: document.getElementById('bmi').value,
+    hr: document.getElementById('hr').value,
+    hrv: document.getElementById('hrv').value,
+    spo2: document.getElementById('spo2').value,
+    steps: document.getElementById('steps').value,
+    cal_burn: document.getElementById('cal_burn').value,
+    act_min: document.getElementById('act_min').value,
+    s_in: document.getElementById('s_in').value,
+    s_out: document.getElementById('s_out').value,
+    s_q: document.getElementById('s_q').value,
+    m_am: document.getElementById('m_am').value,
+    m_pm: document.getElementById('m_pm').value,
+    m_ni: document.getElementById('m_ni').value,
+    m_sn: document.getElementById('m_sn').value,
+    p_kcal: document.getElementById('p_kcal').value,
+    p_p: document.getElementById('p_p').value,
+    p_f: document.getElementById('p_f').value,
+    p_c: document.getElementById('p_c').value,
+    water: document.getElementById('water').value,
+    cond_note: document.getElementById('cond_note').value,
+    comment: document.getElementById('comment').value,
+    ems_time: document.getElementById('ems_time').value,
+    ems_note: document.getElementById('ems_note').value,
+    mode: mode,
+    date: key,
+  }));
+
+  if (!silent) showToast('💾 データを保存しました！');
+
+  // Googleスプレッドシートにも保存
+  sendToSheets(rec);
+}
+
+async function sendToSheets(rec) {
+  try {
+    const res = await fetch('/.netlify/functions/gas_save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rec)
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      showToast('📊 スプレッドシートに保存しました！');
+    }
+  } catch(err) {
+    console.error('Sheets save error:', err);
+  }
+}
+
+// 入力フィールドの変更を監視して自動保存（3秒後）
+let autoSaveTimer = null;
+function scheduleAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveData(true), 3000);
+}
+
+// ドラフトを復元
+function restoreDraft() {
+  const draft = JSON.parse(localStorage.getItem('trainerDraft') || 'null');
+  if (!draft) return;
+
+  // 今日のドラフトのみ復元
+  const today = new Date().toISOString().slice(0,10);
+  if (draft.date !== today) return;
+
+  const fields = ['weight','bodyfat','bmi','hr','hrv','spo2','steps','cal_burn','act_min',
+                  's_in','s_out','m_am','m_pm','m_ni','m_sn','p_kcal','p_p','p_f','p_c',
+                  'water','cond_note','comment','ems_time','ems_note'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && draft[id]) el.value = draft[id];
+  });
+  if (draft.s_q) {
+    document.getElementById('s_q').value = draft.s_q;
+    document.getElementById('sqv').textContent = draft.s_q;
+  }
+  if (draft.mode) setMode(draft.mode);
+  updGoal();
+
+// 自動保存リスナーを全フィールドに設定
+document.querySelectorAll('input[type=text], input[type=number], input[type=time], input[type=date], textarea, select').forEach(el => {
+  el.addEventListener('input', scheduleAutoSave);
+  el.addEventListener('change', scheduleAutoSave);
+});
+
+// ページ読み込み時にドラフト復元
+restoreDraft();
+  updPFC();
+  showToast('📋 前回の入力を復元しました');
 }
 
 function showToast(msg) {
@@ -844,6 +937,7 @@ function gen() {
   const card = document.getElementById('repCard');
   card.classList.add('show');
   setTimeout(() => card.scrollIntoView({behavior:'smooth',block:'start'}), 80);
+  saveData(true); // 報告書生成時に自動保存
 }
 
 // ── Copy report ──
